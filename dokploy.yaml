@@ -1,0 +1,26 @@
+# ==============================
+# Dokploy Configuration
+# ==============================
+# Build Settings
+build:
+  type: dockerfile
+  dockerfile: Dockerfile
+
+# Network Settings  
+network:
+  port: 8000
+
+# Environment Variables (أو أضفها من لوحة Dokploy)
+env:
+  - SECRET_KEY=g%81=&)*3xqoe)&td2*3n^@t$3=6a(!j$2ccl^my-@q=gsop3d
+  - DEBUG=False
+  - ALLOWED_HOSTS=*
+  - USE_R2_STORAGE=True
+  - R2_ACCOUNT_ID=75fa3746ce94b772172774f8c659552a
+  - R2_ACCESS_KEY_ID=9d7ad130ae2907d5db1de7b956a0a17d
+  - R2_SECRET_ACCESS_KEY=e1eb90877de8d198c835d7709147b99d68d38a9438d8c1a9bfc9bef21d8113c3
+  - R2_BUCKET_NAME=erphr
+
+# Volumes
+volumes:
+  - /app/data
