@@ -15,6 +15,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
+    dos2unix \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # نسخ ملف المتطلبات وتثبيتها
@@ -24,17 +26,21 @@ RUN pip install --no-cache-dir -r requirements.txt
 # نسخ كود المشروع
 COPY . .
 
-# جعل entrypoint قابل للتنفيذ
-RUN chmod +x entrypoint.sh
+# تحويل line endings وجعل entrypoint قابل للتنفيذ
+RUN dos2unix entrypoint.sh && chmod +x entrypoint.sh
 
 # إنشاء مجلدات مطلوبة
-RUN mkdir -p logs staticfiles media
+RUN mkdir -p logs staticfiles media data
 
-# جمع الملفات الثابتة
-RUN python manage.py collectstatic --noinput
+# جمع الملفات الثابتة (مع مفتاح وهمي للبناء فقط)
+RUN SECRET_KEY=build-time-key python manage.py collectstatic --noinput
 
 # تعريض المنفذ
 EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/admin/login/ || exit 1
 
 # أمر التشغيل
 ENTRYPOINT ["./entrypoint.sh"]

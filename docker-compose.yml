@@ -10,8 +10,8 @@ services:
       - "8000:8000"
     environment:
       - DEBUG=False
-      - SECRET_KEY=${SECRET_KEY}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
       - DB_PATH=/app/data/db.sqlite3
       - USE_R2_STORAGE=${USE_R2_STORAGE:-False}
       - R2_ACCOUNT_ID=${R2_ACCOUNT_ID:-}
@@ -20,8 +20,8 @@ services:
       - R2_BUCKET_NAME=${R2_BUCKET_NAME:-}
       - R2_PUBLIC_URL=${R2_PUBLIC_URL:-}
     volumes:
-      - ./data:/app/data
+      - hr_data:/app/data
     restart: unless-stopped
 
 volumes:
-  data:
+  hr_data:
