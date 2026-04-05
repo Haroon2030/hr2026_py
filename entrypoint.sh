@@ -17,6 +17,9 @@ python manage.py collectstatic --noinput || true
 echo "==> Setting up permissions..."
 python manage.py setup_permissions || true
 
+echo "==> Creating admin user..."
+python manage.py create_admin || true
+
 echo "==> Starting server on port 8000..."
 exec gunicorn hr_project.wsgi:application \
     --bind 0.0.0.0:8000 \
