@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.advancefile',),
+            bases=('core.advancefile',),
         ),
         migrations.CreateModel(
             name='EmployeeFileProxy',
@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.employeefile',),
+            bases=('core.employeefile',),
         ),
         migrations.CreateModel(
             name='SalaryAdjustmentProxy',
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.salaryadjustment',),
+            bases=('core.salaryadjustment',),
         ),
         migrations.CreateModel(
             name='StatementFileProxy',
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.statementfile',),
+            bases=('core.statementfile',),
         ),
         migrations.CreateModel(
             name='TerminationFileProxy',
@@ -75,6 +75,6 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.terminationfile',),
+            bases=('core.terminationfile',),
         ),
     ]

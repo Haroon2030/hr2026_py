@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.attendancerecord',),
+            bases=('core.attendancerecord',),
         ),
         migrations.CreateModel(
             name='ViolationFileProxy',
@@ -35,6 +35,6 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.violationfile',),
+            bases=('core.violationfile',),
         ),
     ]

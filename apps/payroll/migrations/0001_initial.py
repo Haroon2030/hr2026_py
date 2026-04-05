@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.payroll',),
+            bases=('core.payroll',),
         ),
         migrations.CreateModel(
             name='PayrollPeriod',

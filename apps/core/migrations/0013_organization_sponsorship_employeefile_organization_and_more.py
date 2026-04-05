@@ -40,11 +40,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='employeefile',
             name='organization',
-            field=models.ForeignKey(blank=True, db_column='organization', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, to='hr.organization', to_field='name', verbose_name='المؤسسة'),
+            field=models.ForeignKey(blank=True, db_column='organization', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.organization', to_field='name', verbose_name='المؤسسة'),
         ),
         migrations.AddField(
             model_name='employeefile',
             name='sponsorship',
-            field=models.ForeignKey(blank=True, db_column='sponsorship', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, to='hr.sponsorship', to_field='name', verbose_name='الكفالة'),
+            field=models.ForeignKey(blank=True, db_column='sponsorship', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.sponsorship', to_field='name', verbose_name='الكفالة'),
         ),
     ]

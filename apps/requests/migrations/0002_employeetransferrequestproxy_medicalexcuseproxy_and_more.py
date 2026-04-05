@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.employeetransferrequest',),
+            bases=('core.employeetransferrequest',),
         ),
         migrations.CreateModel(
             name='MedicalExcuseProxy',
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.medicalexcuse',),
+            bases=('core.medicalexcuse',),
         ),
         migrations.CreateModel(
             name='MedicalInsuranceProxy',
@@ -48,6 +48,6 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.medicalinsurance',),
+            bases=('core.medicalinsurance',),
         ),
     ]

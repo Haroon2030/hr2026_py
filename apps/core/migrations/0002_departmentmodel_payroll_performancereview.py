@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True, verbose_name='نشط')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
                 ('manager', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='managed_departments', to=settings.AUTH_USER_MODEL, verbose_name='مدير القسم')),
-                ('parent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sub_departments', to='hr.departmentmodel', verbose_name='القسم الرئيسي')),
+                ('parent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sub_departments', to='core.departmentmodel', verbose_name='القسم الرئيسي')),
             ],
             options={
                 'verbose_name': 'قسم',
@@ -56,8 +56,8 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
                 ('approved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='approved_payrolls', to=settings.AUTH_USER_MODEL, verbose_name='اعتمد بواسطة')),
                 ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_payrolls', to=settings.AUTH_USER_MODEL, verbose_name='أنشئ بواسطة')),
-                ('department', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='payroll_employees', to='hr.departmentmodel', verbose_name='القسم')),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='payroll_records', to='hr.employeefile', verbose_name='الموظف')),
+                ('department', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='payroll_employees', to='core.departmentmodel', verbose_name='القسم')),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='payroll_records', to='core.employeefile', verbose_name='الموظف')),
             ],
             options={
                 'verbose_name': 'كشف راتب',
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
                 ('acknowledged_at', models.DateTimeField(blank=True, null=True, verbose_name='تاريخ الاطلاع')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='performance_reviews', to='hr.employeefile', verbose_name='الموظف')),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='performance_reviews', to='core.employeefile', verbose_name='الموظف')),
                 ('reviewer', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reviews_given', to=settings.AUTH_USER_MODEL, verbose_name='المُقيّم')),
             ],
             options={

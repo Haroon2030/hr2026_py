@@ -272,7 +272,7 @@ class Migration(migrations.Migration):
                 ('branch_approved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_branch_approvals', to=settings.AUTH_USER_MODEL, verbose_name='معتمد من مدير الفرع')),
                 ('completed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_completions', to=settings.AUTH_USER_MODEL, verbose_name='أنجز بواسطة')),
                 ('department_approved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_dept_approvals', to=settings.AUTH_USER_MODEL, verbose_name='معتمد من مدير الإدارة')),
-                ('employee_ref', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='salary_adjustments', to='hr.employeefile', verbose_name='ملف الموظف')),
+                ('employee_ref', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='salary_adjustments', to='core.employeefile', verbose_name='ملف الموظف')),
                 ('manager_approved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_mgr_approvals', to=settings.AUTH_USER_MODEL, verbose_name='معتمد من المدير العام')),
                 ('uploaded_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(class)s_uploads', to=settings.AUTH_USER_MODEL, verbose_name='رُفع بواسطة')),
             ],

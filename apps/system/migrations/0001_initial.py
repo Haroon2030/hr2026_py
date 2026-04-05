@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.activitylog',),
+            bases=('core.activitylog',),
         ),
         migrations.CreateModel(
             name='DepartmentModelProxy',
@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.departmentmodel',),
+            bases=('core.departmentmodel',),
         ),
         migrations.CreateModel(
             name='NotificationProxy',
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.notification',),
+            bases=('core.notification',),
         ),
         migrations.CreateModel(
             name='PayrollProxy',
@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.payroll',),
+            bases=('core.payroll',),
         ),
         migrations.CreateModel(
             name='PerformanceReviewProxy',
@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.performancereview',),
+            bases=('core.performancereview',),
         ),
         migrations.CreateModel(
             name='SystemMessageProxy',
@@ -89,7 +89,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.systemmessage',),
+            bases=('core.systemmessage',),
         ),
         migrations.CreateModel(
             name='UserProxy',
@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.user',),
+            bases=('core.user',),
             managers=[
                 ('objects', django.contrib.auth.models.UserManager()),
             ],

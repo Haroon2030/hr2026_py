@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('reason', models.TextField(blank=True, null=True, verbose_name='السبب')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
                 ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL, verbose_name='أنشئ بواسطة')),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='status_logs', to='hr.employeefile', verbose_name='الموظف')),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='status_logs', to='core.employeefile', verbose_name='الموظف')),
             ],
             options={
                 'verbose_name': 'سجل حالة عامل',

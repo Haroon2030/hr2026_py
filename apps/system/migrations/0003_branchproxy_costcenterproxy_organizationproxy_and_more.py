@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.branch',),
+            bases=('core.branch',),
         ),
         migrations.CreateModel(
             name='CostCenterProxy',
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.costcenter',),
+            bases=('core.costcenter',),
         ),
         migrations.CreateModel(
             name='OrganizationProxy',
@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.organization',),
+            bases=('core.organization',),
         ),
         migrations.CreateModel(
             name='SponsorshipProxy',
@@ -61,6 +61,6 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('hr.sponsorship',),
+            bases=('core.sponsorship',),
         ),
     ]

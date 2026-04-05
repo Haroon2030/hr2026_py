@@ -14,16 +14,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='employeetransferrequest',
             name='current_cost_center',
-            field=models.ForeignKey(blank=True, db_column='current_cost_center', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='hr.costcenter', to_field='name', verbose_name='مركز التكلفة الحالي'),
+            field=models.ForeignKey(blank=True, db_column='current_cost_center', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='core.costcenter', to_field='name', verbose_name='مركز التكلفة الحالي'),
         ),
         migrations.AlterField(
             model_name='employeetransferrequest',
             name='new_cost_center',
-            field=models.ForeignKey(blank=True, db_column='new_cost_center', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='hr.costcenter', to_field='name', verbose_name='مركز التكلفة الجديد'),
+            field=models.ForeignKey(blank=True, db_column='new_cost_center', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='core.costcenter', to_field='name', verbose_name='مركز التكلفة الجديد'),
         ),
         migrations.AlterField(
             model_name='employeetransferrequest',
             name='requested_branch',
-            field=models.ForeignKey(blank=True, db_column='requested_branch', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='hr.branch', to_field='name', verbose_name='الفرع المطلوب'),
+            field=models.ForeignKey(blank=True, db_column='requested_branch', db_constraint=False, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='core.branch', to_field='name', verbose_name='الفرع المطلوب'),
         ),
     ]
