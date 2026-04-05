@@ -1,0 +1,164 @@
+{# cSpell:disable #}
+{% load i18n static hr_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="NONE,NOARCHIVE">
+    <title>{% block title %}HR Pro{% endblock %}</title>
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/admindek.css' %}">
+    <link rel="stylesheet" href="{% static 'css/erp-enhancements.css' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'img/logo.ico' %}">
+    {% block extrastyle %}{% endblock %}
+    {% block extrahead %}{% endblock %}
+</head>
+<body class="admindek-body{% block bodyclass %} {% endblock %}">
+
+{% if is_popup %}
+{# ───── Popup ───── #}
+<div class="admindek-popup p-3">
+
+{% elif has_permission %}
+{# ───── Full Admin Layout ───── #}
+
+<aside class="admindek-sidebar" id="adminSidebar">
+    <div class="sidebar-brand">
+        <a href="{% url 'admin:index' %}" class="brand-link">
+            <img src="{% static 'img/logo.ico' %}" alt="logo" style="width:32px; height:32px; object-fit:contain; margin-left:8px;">
+            <span class="brand-text">نظام الموارد البشرية</span>
+        </a>
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar"><i class="fas fa-user-circle fa-2x"></i></div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="sidebar-user-role">{{ user.role|default:"مسؤول" }}</div>
+            </div>
+        </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav">
+        <a href="{% url 'admin:index' %}" class="sidebar-nav-link" data-url="{% url 'admin:index' %}">
+            <i class="fas fa-th-large nav-icon"></i>
+            <span>لوحة المعلومات</span>
+        </a>
+        {% for app in available_apps %}
+        <div class="nav-section">
+            <div class="nav-section-header" data-bs-toggle="collapse"
+                 data-bs-target="#navApp-{{ app.app_label }}" aria-expanded="false">
+                <i class="{{ app.app_label|app_icon }} nav-icon"></i>
+                <span>{{ app.name }}</span>
+                <i class="fas fa-chevron-left nav-arrow"></i>
+            </div>
+            <div class="collapse" id="navApp-{{ app.app_label }}">
+                {% for model in app.models %}
+                <a href="{{ model.admin_url }}" class="sidebar-nav-link sidebar-nav-child"
+                   data-url="{{ model.admin_url }}">
+                    <i class="{{ model.object_name|model_icon }} nav-icon"></i>
+                    <span>{{ model.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </nav>
+    <div class="sidebar-footer-link">
+        <a href="{% url 'admin:logout' %}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>تسجيل الخروج</span>
+        </a>
+    </div>
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<header class="admindek-topbar d-flex align-items-center">
+    <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="تثبيت الشريط الجانبي / إلغاء التثبيت">
+        <i class="fas fa-bars"></i>
+    </button>
+    <a href="{% url 'admin:index' %}" class="topbar-brand-link">
+        <img src="{% static 'img/logo.ico' %}" alt="logo" style="width:28px; height:28px; object-fit:contain; margin-left:6px;">
+        <span class="topbar-brand-text">نظام الموارد البشرية</span>
+    </a>
+    <div class="flex-grow-1"></div>
+
+    <div class="topbar-user dropdown">
+        <button class="topbar-user-btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-circle topbar-avatar"></i>
+            <span class="d-none d-md-inline topbar-username">{{ user.get_full_name|default:user.username }}</span>
+        </button>
+        <ul class="dropdown-menu">
+            {% url 'admin:password_change' as pwd_url %}
+            {% if pwd_url %}
+            <li>
+                <a class="dropdown-item" href="{{ pwd_url }}">
+                    <i class="fas fa-key me-2"></i>{% trans "Change password" %}
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            {% endif %}
+            <li>
+                <a class="dropdown-item text-danger" href="{% url 'admin:logout' %}">
+                    <i class="fas fa-sign-out-alt me-2"></i>{% trans "Log out" %}
+                </a>
+            </li>
+        </ul>
+    </div>
+</header>
+
+<div class="admindek-main" id="adminMain">
+    <div class="admindek-content">
+
+{% else %}
+{# ───── Login / No Permission ───── #}
+<div class="admindek-auth-wrap">
+
+{% endif %}
+
+{# ─── template blocks ──────────────────────────────────────────── #}
+
+    {% block content_title %}{% endblock %}
+    {% block breadcrumbs %}{% endblock %}
+
+    {% block messages %}
+        {% if messages %}
+            <div class="admindek-messages">
+                {% for message in messages %}
+                    <div class="alert alert-dismissible fade show
+                        {% if message.tags == 'error' %}alert-danger
+                        {% elif message.tags == 'success' %}alert-success
+                        {% elif message.tags == 'warning' %}alert-warning
+                        {% else %}alert-info{% endif %}" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endblock messages %}
+
+    {% block content %}{% endblock content %}
+
+{# ─── close layout wrappers ────────────────────────────────────── #}
+{% if is_popup %}
+    </div>{# /admindek-popup #}
+{% elif has_permission %}
+    </div>{# /admindek-content #}
+    <footer class="admindek-footer">
+        {% block footer %}&copy; {% now "Y" %} نظام الموارد البشرية{% endblock footer %}
+    </footer>
+    </div>{# /admindek-main #}
+{% else %}
+    </div>{# /admindek-auth-wrap #}
+{% endif %}
+
+{# ─── scripts ─────────────────────────────────────────────────── #}
+<script src="https://unpkg.com/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/layout_fix.js' %}"></script>
+<script src="{% static 'js/erp-interactions.js' %}"></script>
+{% block extrascript %}{% endblock %}
+{% block extrajs %}{% endblock %}
+{% block coltype %}{% endblock %}
+{% block nav-global %}{% endblock %}
+</body>
+</html>

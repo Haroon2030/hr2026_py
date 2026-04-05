@@ -1,0 +1,399 @@
+{% load i18n humanize %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة مسير الرواتب - Payslip</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .payslip-container {
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            page-break-after: always; /* للطباعة بشكل متسلسل */
+        }
+
+        .payslip-container:last-child {
+            page-break-after: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1a1d2e;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .company-info h1 {
+            margin: 0;
+            color: #1a1d2e;
+            font-size: 24px;
+        }
+
+        .company-info p {
+            margin: 5px 0 0 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .payslip-title {
+            text-align: center;
+        }
+
+        .payslip-title h2 {
+            margin: 0;
+            color: #e20000;
+            font-size: 22px;
+            border: 2px dashed #e20000;
+            padding: 5px 15px;
+            display: inline-block;
+            border-radius: 5px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .info-value {
+            color: #1a1d2e;
+            font-weight: 700;
+        }
+
+        /* الجداول المالية */
+        .financial-tables {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #1a1d2e;
+            color: white;
+            padding: 10px;
+            text-align: right;
+            border-radius: 4px 4px 0 0;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tr:last-child td {
+            border-bottom: 2px solid #1a1d2e;
+        }
+
+        .table-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #1a1d2e;
+            border-bottom: 2px solid #e20000;
+            display: inline-block;
+            padding-bottom: 3px;
+        }
+
+        .amount {
+            text-align: left;
+            font-family: monospace;
+            font-size: 15px;
+            direction: ltr; /* للأرقام */
+        }
+
+        .total-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .net-salary-box {
+            background: #1a1d2e;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+
+        .net-salary-box p {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #ced4da;
+        }
+
+        .net-salary-box h3 {
+            margin: 0;
+            font-size: 32px;
+            color: #28a745;
+        }
+
+        .signatures {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .sig-box {
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+
+        .sig-box span {
+            display: block;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: #e20000;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(226, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .print-btn:hover {
+            background: #c80000;
+            transform: translateY(-2px);
+        }
+
+        /* إخفاء الزر والخلفية عند الطباعة */
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            .payslip-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+            .print-btn {
+                display: none;
+            }
+            .net-salary-box {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            th {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="print-btn" onclick="window.print()">🖨️ طباعة المسيرات</button>
+
+    {% for payroll in payrolls %}
+    <div class="payslip-container">
+        
+        <!-- Header -->
+        <div class="header">
+            <div class="company-info">
+                <h1>HR Pro ERP</h1>
+                <p>إدارة الموارد البشرية والرواتب</p>
+            </div>
+            <div class="payslip-title">
+                <h2>مسير راتب - Payslip</h2>
+                <p style="margin:5px 0 0 0; font-weight:bold; color:#1a1d2e;">
+                    شهر: {{ payroll.period_month }} / سنة: {{ payroll.period_year }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Employee Info -->
+        <div class="info-grid">
+            <div>
+                <div class="info-item">
+                    <span class="info-label">اسم الموظف:</span>
+                    <span class="info-value">{{ payroll.employee.employee_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">رقم الموظف:</span>
+                    <span class="info-value">{{ payroll.employee.employee_number|default:"-" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">الفرع:</span>
+                    <span class="info-value">{{ payroll.employee.branch|default:"-" }}</span>
+                </div>
+            </div>
+            <div>
+                <div class="info-item">
+                    <span class="info-label">الإدارة/القسم:</span>
+                    <span class="info-value">{{ payroll.department|default:"-" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">تاريخ التعيين:</span>
+                    <span class="info-value">{{ payroll.employee.start_date|date:"Y-m-d" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">حالة المسير:</span>
+                    <span class="info-value" style="color:#28a745;">{{ payroll.get_status_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Tables -->
+        <div class="financial-tables">
+            <!-- Earnings -->
+            <div>
+                <div class="table-title">المستحقات (Earnings)</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>البند</th>
+                            <th style="text-align:left;">المبلغ (ر.س)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>الراتب الأساسي</td>
+                            <td class="amount">{{ payroll.basic_salary }}</td>
+                        </tr>
+                        <tr>
+                            <td>بدل السكن</td>
+                            <td class="amount">{{ payroll.housing_allowance }}</td>
+                        </tr>
+                        <tr>
+                            <td>بدل النقل</td>
+                            <td class="amount">{{ payroll.transport_allowance }}</td>
+                        </tr>
+                        <tr>
+                            <td>بدلات أخرى</td>
+                            <td class="amount">{{ payroll.other_allowances }}</td>
+                        </tr>
+                        <tr>
+                            <td>إضافي (Overtime)</td>
+                            <td class="amount">{{ payroll.overtime_amount }}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td style="color:#28a745;">إجمالي المستحقات</td>
+                            <td class="amount" style="color:#28a745;">{{ payroll.total_earnings }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Deductions -->
+            <div>
+                <div class="table-title">الخصومات (Deductions)</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>البند</th>
+                            <th style="text-align:left;">المبلغ (ر.س)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>التأمينات الاجتماعية (GOSI)</td>
+                            <td class="amount">{{ payroll.social_insurance }}</td>
+                        </tr>
+                        <tr>
+                            <td>خصم الغياب</td>
+                            <td class="amount">{{ payroll.absence_deduction }}</td>
+                        </tr>
+                        <tr>
+                            <td>خصم السلف</td>
+                            <td class="amount">{{ payroll.advance_deduction }}</td>
+                        </tr>
+                        <tr>
+                            <td>خصومات أخرى</td>
+                            <td class="amount">{{ payroll.deductions }}</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td class="amount">-</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td style="color:#dc3545;">إجمالي الخصومات</td>
+                            <td class="amount" style="color:#dc3545;">{{ payroll.total_deductions }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Net Salary -->
+        <div class="net-salary-box">
+            <p>صافي الراتب المستحق (Net Payable Salary)</p>
+            <h3>{{ payroll.net_salary }} <span style="font-size:16px; color:#ced4da;">ر.س</span></h3>
+        </div>
+
+        <!-- Signatures -->
+        <div class="signatures">
+            <div class="sig-box">
+                <strong>الموظف (Employee)</strong>
+                <span>الاسم والتوقيع</span>
+            </div>
+            <div class="sig-box">
+                <strong>الموارد البشرية (HR)</strong>
+                <span>الختم والتوقيع</span>
+            </div>
+            <div class="sig-box">
+                <strong>المدير المالي (Finance Manager)</strong>
+                <span>الاعتماد</span>
+            </div>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</body>
+</html>

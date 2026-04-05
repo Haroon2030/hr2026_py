@@ -1,0 +1,1750 @@
+/*
+ * rtl.css – متغيرات CSS وإصلاحات RTL التكميلية
+ * هذا الملف يحتوي على CSS Variables وإصلاحات RTL/Grid اللازمة
+ * يُحمَّل بجانب admindek.css من templates/admin/base.html
+ */
+
+
+/* === CSS Variables === */
+:root {
+    --primary: #4361ee;
+    --primary-light: #eef0ff;
+    --primary-dark: #3a56d4;
+    --accent: #7209b7;
+    --success: #06d6a0;
+    --warning: #ffd166;
+    --danger: #ef476f;
+    --info: #118ab2;
+    --dark: #1a1d2e;
+    --dark-2: #252842;
+    --dark-3: #2f3352;
+    --gray-50: #f8f9fc;
+    --gray-100: #f1f3f9;
+    --gray-200: #e2e6ef;
+    --gray-300: #ccd2e0;
+    --gray-400: #9ca3b8;
+    --gray-600: #5a6178;
+    --gray-700: #3d4356;
+    --white: #ffffff;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08);
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+}
+
+/* === 1. Base & RTL === */
+html, body {
+    direction: rtl !important;
+    text-align: right !important;
+    font-family: var(--font) !important;
+    background: var(--gray-50) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden !important;
+}
+
+*, *::before, *::after {
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* === 2. Sidebar === */
+:root {
+    --lte-sidebar-width: 280px !important;
+}
+/* === RTL Grid Fix ===
+   direction:ltr on .app-wrapper keeps grid columns predictable.
+   JS in layout_fix.js swaps grid-template-areas to put sidebar on the RIGHT.
+*/
+.app-wrapper {
+    direction: ltr !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+}
+
+/* Restore RTL text direction inside all grid children */
+.app-header,
+.app-sidebar,
+.app-main,
+.app-footer,
+.main-footer {
+    direction: rtl !important;
+}
+
+.app-sidebar,
+.main-sidebar {
+    background: linear-gradient(180deg, var(--dark) 0%, var(--dark-2) 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-left: none !important;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15) !important;
+    min-width: var(--lte-sidebar-width) !important;
+    max-width: var(--lte-sidebar-width) !important;
+}
+
+
+
+/* Brand */
+.sidebar-wrapper {
+    padding: 0 !important;
+}
+.brand-link {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 12px 8px !important;
+}
+.brand-link .brand-image {
+    margin-left: 0.5rem !important;
+    margin-right: 0 !important;
+}
+.brand-link .brand-text {
+    font-weight: 700 !important;
+    letter-spacing: -0.3px;
+}
+
+/* Nav items */
+.sidebar-menu .nav-link {
+    text-align: right !important;
+    border-radius: var(--radius-xs) !important;
+    margin: 1px 4px !important;
+    padding: 9px 8px !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.875rem !important;
+    transition: var(--transition) !important;
+}
+.sidebar-menu .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--white) !important;
+    transform: translateX(-2px) !important;
+}
+.sidebar-menu .nav-link.active {
+    background: var(--primary) !important;
+    color: var(--white) !important;
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.35) !important;
+}
+
+/* القسم المفتوح (menu-open) - تأثير خاص */
+.sidebar-menu .has-treeview.menu-open > .nav-link {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--white) !important;
+    border-right: 3px solid var(--primary) !important;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0 !important;
+}
+/* القسم اللي الماوس عليه */
+.sidebar-menu .has-treeview > .nav-link:hover {
+    background: rgba(67, 97, 238, 0.15) !important;
+    color: var(--white) !important;
+    border-right: 3px solid var(--primary) !important;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0 !important;
+}
+
+/* تأثير على الأيقونة في القسم المفتوح */
+.sidebar-menu .has-treeview.menu-open > .nav-link .nav-icon {
+    color: var(--primary) !important;
+}
+.sidebar-menu .nav-icon {
+    margin-left: 0.4rem !important;
+    margin-right: 0 !important;
+    font-size: 1rem !important;
+    width: 20px !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+}
+.sidebar-menu .nav-treeview {
+    padding-right: 0.5rem !important;
+    padding-left: 0 !important;
+}
+.sidebar-menu .nav-link > .right,
+.sidebar-menu .nav-link > p > .right,
+.sidebar-menu .nav-link > .nav-arrow,
+.sidebar-menu .nav-link > p > .nav-arrow {
+    position: absolute !important;
+    left: 1rem !important;
+    right: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+/* سهم القائمة المنسدلة - يسار في RTL */
+.sidebar-menu .has-treeview > .nav-link {
+    position: relative !important;
+}
+.sidebar-menu .nav-arrow {
+    transition: transform 0.3s ease !important;
+}
+.nav-item.has-treeview.menu-open > .nav-link .nav-arrow,
+.nav-item.has-treeview.menu-open > .nav-link > p > .nav-arrow {
+    transform: translateY(-50%) rotate(-90deg) !important;
+}
+.sidebar-menu .nav-arrow.fas.fa-chevron-right::before {
+    content: "\f053" !important;
+}
+/* Override AdminLTE RTL positioning for nav-arrow */
+.sidebar-menu .nav-link > .nav-arrow,
+.sidebar-menu .nav-link > p > .nav-arrow,
+.sidebar-menu .nav-link > .nav-badge,
+.sidebar-menu .nav-link > p > .nav-badge {
+    right: auto !important;
+    left: 1rem !important;
+}
+
+/* === Sidebar Icon Colors === */
+.fa-user-shield { color: #60a5fa !important; }
+.fa-user-plus { color: #34d399 !important; }
+.fa-money-bill-wave { color: #fbbf24 !important; }
+.fa-file-alt { color: #a78bfa !important; }
+.fa-exclamation-triangle { color: #fb923c !important; }
+.fa-user-minus { color: #f87171 !important; }
+.fa-hospital { color: #2dd4bf !important; }
+.fa-notes-medical { color: #38bdf8 !important; }
+.fa-hand-holding-usd { color: #4ade80 !important; }
+.fa-exchange-alt { color: #c084fc !important; }
+.fa-clock { color: #fcd34d !important; }
+.fa-envelope { color: #67e8f9 !important; }
+.fa-history { color: #d8b4fe !important; }
+.fa-bell { color: #fca5a5 !important; }
+.fa-users-cog { color: #93c5fd !important; }
+.fa-users { color: #86efac !important; }
+.fa-user { color: #7dd3fc !important; }
+.fa-folder { color: #fdba74 !important; }
+.fa-circle { color: rgba(255,255,255,0.4) !important; }
+
+/* Active link - icons white */
+.sidebar-menu .nav-link.active .nav-icon,
+.sidebar-menu .nav-link.active .fas,
+.sidebar-menu .nav-link.active .far,
+.sidebar-menu .nav-link.active .fab {
+    color: var(--white) !important;
+}
+
+/* Sidebar section headers */
+.sidebar-menu .nav-header {
+    text-align: right !important;
+    padding-right: 16px !important;
+    font-size: 0.7rem !important;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.3) !important;
+    margin-top: 10px !important;
+}
+
+/* === 3. Top Navbar === */
+#jazzy-navbar,
+.app-header.navbar,
+nav.app-header {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-2) 100%) !important;
+    border-bottom: none !important;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18) !important;
+    min-height: 60px !important;
+    padding: 0 1.25rem !important;
+    z-index: 1040 !important;
+}
+/* Override bg-body class that AdminLTE 4 adds */
+.app-header.bg-body,
+#jazzy-navbar.bg-body {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-2) 100%) !important;
+    --bs-bg-opacity: 1 !important;
+}
+
+/* Navbar links / icons */
+.app-header .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.75) !important;
+    padding: 0.5rem 0.85rem !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 1.05rem !important;
+    transition: var(--transition) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+}
+.app-header .navbar-nav .nav-link:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+.app-header .navbar-nav .nav-link i {
+    font-size: 1.1rem !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+.app-header .navbar-nav .nav-link:hover i {
+    color: #fff !important;
+}
+.navbar-nav {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+}
+
+/* RTL navbar: menu button right, user/language left */
+.app-header .container-fluid {
+    display: flex !important;
+    align-items: center !important;
+    direction: rtl !important;
+}
+.app-header .navbar-nav.ms-auto {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+/* Navbar brand / site title in header */
+.app-header .navbar-brand,
+.app-header .brand-text {
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+}
+
+/* Search box in navbar */
+.app-header .form-control,
+.app-header .input-group {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: var(--radius-sm) !important;
+    color: #fff !important;
+}
+.app-header .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+.app-header .form-control:focus {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25) !important;
+}
+.app-header .input-group-append .btn,
+.app-header .input-group .btn {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+.app-header .btn-navbar {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* User menu / dropdown in navbar */
+.app-header .nav-item.dropdown .nav-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.35rem 0.75rem !important;
+    border-radius: 50px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.app-header .nav-item.dropdown .nav-link:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+}
+.app-header .nav-item .user-image,
+.app-header .user-image {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 50% !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    object-fit: cover !important;
+}
+
+/* Dropdown menus from navbar */
+.app-header .dropdown-menu {
+    background: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+    padding: 0.5rem !important;
+    margin-top: 0.5rem !important;
+}
+.app-header .dropdown-menu .dropdown-item {
+    border-radius: var(--radius-xs) !important;
+    padding: 0.55rem 1rem !important;
+    font-size: 0.9rem !important;
+    color: var(--gray-700) !important;
+    transition: var(--transition) !important;
+}
+.app-header .dropdown-menu .dropdown-item:hover {
+    background: var(--primary-light) !important;
+    color: var(--primary) !important;
+}
+
+/* Sidebar toggle button (AdminLTE 4 uses data-lte-toggle) */
+.app-header [data-lte-toggle="sidebar"],
+.app-header .sidebar-toggle {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 1.25rem !important;
+}
+.app-header [data-lte-toggle="sidebar"]:hover,
+.app-header .sidebar-toggle:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Notification badges */
+.app-header .nav-link .badge {
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    font-size: 0.6rem !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+    padding: 0 4px !important;
+    border-radius: 50px !important;
+    background: var(--danger) !important;
+    color: #fff !important;
+}
+
+/* Breadcrumb / Content Header */
+.content-header,
+.app-content-header {
+    padding: 1rem 1.5rem 0.75rem !important;
+    background: var(--white) !important;
+    border-bottom: 1px solid var(--gray-200) !important;
+    margin-bottom: 0 !important;
+}
+.content-header h1,
+.app-content-header h3 {
+    font-size: 1.3rem !important;
+    font-weight: 800 !important;
+    color: var(--dark) !important;
+    letter-spacing: -0.3px !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
+}
+
+/* === 4. Content Area === */
+.content-wrapper,
+.app-main {
+    background: var(--gray-50) !important;
+}
+.content-wrapper > .content,
+.app-content {
+    padding: 1rem 1.5rem !important;
+}
+
+/* === 5. Cards === */
+.card {
+    border: 1px solid var(--gray-200) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow) !important;
+    overflow: hidden;
+    margin-bottom: 1.25rem !important;
+    background: var(--white) !important;
+}
+.card-header {
+    background: var(--white) !important;
+    border-bottom: 1px solid var(--gray-200) !important;
+    padding: 1rem 1.25rem !important;
+    font-weight: 600 !important;
+}
+.card-body {
+    padding: 1.25rem !important;
+}
+
+/* === 6. Filter Panel (Compact Horizontal) === */
+#changelist-filter {
+    width: 100% !important;
+    float: none !important;
+    flex: none !important;
+    order: -1 !important;
+    background: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-sm) !important;
+    padding: 16px 20px !important;
+    margin-bottom: 16px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    align-items: flex-end !important;
+}
+
+#changelist-filter h2,
+#changelist-filter h3 {
+    display: none !important;
+}
+
+#changelist-filter details {
+    flex: 1 1 180px !important;
+    max-width: 220px !important;
+    margin: 0 !important;
+    border: none !important;
+    background: none !important;
+}
+
+#changelist-filter details summary {
+    display: block !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: var(--gray-600) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px !important;
+    padding: 0 !important;
+    list-style: none !important;
+    cursor: default !important;
+}
+#changelist-filter details summary::-webkit-details-marker {
+    display: none !important;
+}
+
+#changelist-filter details ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+}
+
+#changelist-filter details ul li {
+    margin: 0 !important;
+}
+
+#changelist-filter details ul li a {
+    display: inline-block !important;
+    padding: 5px 12px !important;
+    font-size: 0.8rem !important;
+    border-radius: 20px !important;
+    text-decoration: none !important;
+    color: var(--gray-600) !important;
+    background: var(--gray-100) !important;
+    border: 1px solid var(--gray-200) !important;
+    transition: var(--transition) !important;
+    white-space: nowrap !important;
+    line-height: 1.4 !important;
+}
+
+#changelist-filter details ul li a:hover {
+    background: var(--primary-light) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+#changelist-filter details ul li.selected a {
+    background: var(--primary) !important;
+    color: var(--white) !important;
+    border-color: var(--primary) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 8px rgba(67, 97, 238, 0.25) !important;
+}
+
+/* Date Range Filter in filter panel */
+#changelist-filter .rangefilter-container,
+#changelist-filter details .rangefilter-container {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+}
+#changelist-filter .rangefilter-container input[type="text"],
+#changelist-filter .rangefilter-container input[type="date"] {
+    height: 34px !important;
+    border: 1px solid var(--gray-300) !important;
+    border-radius: var(--radius-xs) !important;
+    padding: 4px 10px !important;
+    font-size: 0.82rem !important;
+    background: var(--white) !important;
+    color: var(--dark) !important;
+    transition: var(--transition) !important;
+    width: 140px !important;
+}
+#changelist-filter .rangefilter-container input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12) !important;
+    outline: none !important;
+}
+#changelist-filter .rangefilter-container button,
+#changelist-filter .rangefilter-container input[type="submit"] {
+    height: 34px !important;
+    border: none !important;
+    background: var(--primary) !important;
+    color: var(--white) !important;
+    border-radius: var(--radius-xs) !important;
+    padding: 0 16px !important;
+    font-size: 0.82rem !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    transition: var(--transition) !important;
+}
+#changelist-filter .rangefilter-container button:hover,
+#changelist-filter .rangefilter-container input[type="submit"]:hover {
+    background: var(--primary-dark) !important;
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3) !important;
+}
+
+/* Form elements in filter panel */
+#changelist-filter form {
+    flex: 1 1 300px !important;
+}
+
+#changelist-filter select {
+    height: 34px !important;
+    border: 1px solid var(--gray-300) !important;
+    border-radius: var(--radius-xs) !important;
+    padding: 4px 10px !important;
+    font-size: 0.82rem !important;
+    background: var(--white) !important;
+    color: var(--dark) !important;
+    width: 100% !important;
+}
+
+#changelist-filter label {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: var(--gray-600) !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+}
+
+/* === 7. Search Bar === */
+#toolbar {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 16px !important;
+}
+
+#toolbar form {
+    display: flex !important;
+    gap: 10px !important;
+    align-items: center !important;
+}
+
+#searchbar {
+    flex: 1 !important;
+    height: 42px !important;
+    border: 1px solid var(--gray-300) !important;
+    border-radius: var(--radius) !important;
+    padding: 0 16px !important;
+    font-size: 0.9rem !important;
+    background: var(--white) !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: var(--transition) !important;
+    direction: rtl !important;
+}
+#searchbar:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1) !important;
+    outline: none !important;
+}
+
+#toolbar input[type="submit"] {
+    height: 42px !important;
+    border: none !important;
+    background: var(--primary) !important;
+    color: var(--white) !important;
+    border-radius: var(--radius) !important;
+    padding: 0 24px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+}
+#toolbar input[type="submit"]:hover {
+    background: var(--primary-dark) !important;
+    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.3) !important;
+    transform: translateY(-1px);
+}
+
+/* === 8. Actions Bar === */
+.actions {
+    background: var(--gray-50) !important;
+    border: 1px solid var(--gray-200) !important;
+    border-radius: var(--radius) !important;
+    padding: 10px 16px !important;
+    margin-bottom: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.actions select {
+    height: 36px !important;
+    border: 1px solid var(--gray-300) !important;
+    border-radius: var(--radius-xs) !important;
+    padding: 0 12px !important;
+    font-size: 0.85rem !important;
+    background: var(--white) !important;
+    min-width: 200px !important;
+}
+
+.actions button,
+.actions .button {
+    height: 36px !important;
+    border: none !important;
+    background: var(--primary) !important;
+    color: var(--white) !important;
+    border-radius: var(--radius-xs) !important;
+    padding: 0 18px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+}
+
+.actions .action-counter {
+    font-size: 0.82rem !important;
+    color: var(--gray-600) !important;
+}
+
+/* === 9. Data Table === */
+#result_list {
+    border-radius: var(--radius) !important;
+    overflow: hidden !important;
+    box-shadow: var(--shadow) !important;
+    border: 1px solid var(--gray-200) !important;
+}
+
+table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    background: var(--white) !important;
+}
+
+table thead th {
+    background: var(--gray-50) !important;
+    color: var(--dark) !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 14px !important;
+    border-bottom: 2px solid var(--gray-200) !important;
+    white-space: nowrap !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+}
+
+table thead th a {
+    color: var(--dark) !important;
+    text-decoration: none !important;
+}
+table thead th a:hover {
+    color: var(--primary) !important;
+}
+
+table tbody tr {
+    transition: var(--transition) !important;
+}
+table tbody tr:hover {
+    background: var(--primary-light) !important;
+}
+table tbody tr:nth-child(even) {
+    background: var(--gray-50) !important;
+}
+table tbody tr:nth-child(even):hover {
+    background: var(--primary-light) !important;
+}
+
+table tbody td {
+    padding: 11px 14px !important;
+    font-size: 0.85rem !important;
+    color: var(--gray-700) !important;
+    border-bottom: 1px solid var(--gray-100) !important;
+    vertical-align: middle !important;
+}
+
+table tbody td a {
+    color: var(--primary) !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+}
+table tbody td a:hover {
+    color: var(--primary-dark) !important;
+    text-decoration: underline !important;
+}
+
+/* Checkbox column */
+table .action-checkbox-column {
+    width: 40px !important;
+    text-align: center !important;
+}
+
+input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 4px !important;
+    accent-color: var(--primary) !important;
+    cursor: pointer !important;
+}
+
+/* === 10. Pagination === */
+.paginator {
+    padding: 12px 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.85rem !important;
+}
+
+.paginator a,
+.paginator span {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    padding: 0 8px !important;
+    border-radius: var(--radius-xs) !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    transition: var(--transition) !important;
+}
+
+.paginator a {
+    color: var(--gray-600) !important;
+    background: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+}
+.paginator a:hover {
+    background: var(--primary-light) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+.paginator .this-page {
+    background: var(--primary) !important;
+    color: var(--white) !important;
+    border: 1px solid var(--primary) !important;
+    font-weight: 700 !important;
+}
+
+/* === 11. Forms (Change Form) === */
+
+/* --- Change form main container --- */
+#content-main .change-form,
+#content-main > form {
+    max-width: 100% !important;
+}
+
+/* --- Form rows: compact grid --- */
+.form-row {
+    border-bottom: 1px solid var(--gray-100) !important;
+    padding: 10px 16px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px 16px !important;
+}
+.form-row > div {
+    flex: 1 1 300px !important;
+}
+.form-row label {
+    font-weight: 600 !important;
+    color: var(--gray-700) !important;
+    font-size: 0.82rem !important;
+    min-width: 130px !important;
+    white-space: nowrap !important;
+}
+.form-row label .required {
+    color: var(--danger) !important;
+    font-weight: 700 !important;
+}
+
+/* --- Input fields --- */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="url"],
+input[type="tel"],
+input[type="date"],
+textarea,
+select {
+    border: 1.5px solid var(--gray-200) !important;
+    border-radius: var(--radius-xs) !important;
+    padding: 9px 14px !important;
+    font-size: 0.88rem !important;
+    transition: var(--transition) !important;
+    font-family: var(--font) !important;
+    direction: rtl !important;
+    background: var(--white) !important;
+    color: var(--dark) !important;
+    width: 100% !important;
+    max-width: 400px !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.08) !important;
+    outline: none !important;
+    background: var(--white) !important;
+}
+
+textarea {
+    max-width: 100% !important;
+    min-height: 80px !important;
+}
+
+/* readonly fields */
+.readonly,
+.form-row .readonly {
+    background: var(--gray-50) !important;
+    color: var(--gray-600) !important;
+    padding: 9px 14px !important;
+    border-radius: var(--radius-xs) !important;
+    font-size: 0.88rem !important;
+    border: 1.5px solid var(--gray-100) !important;
+}
+
+/* --- Fieldset styling --- */
+fieldset {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+fieldset.module {
+    background: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+    border-radius: var(--radius) !important;
+    overflow: hidden !important;
+    margin-bottom: 0 !important;
+}
+
+fieldset h2,
+fieldset .form-row.field-box h2 {
+    background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%) !important;
+    color: var(--dark) !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    padding: 12px 20px !important;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--gray-200) !important;
+    letter-spacing: 0.2px !important;
+}
+
+/* collapse fieldsets */
+fieldset.collapse {
+    border: 1px solid var(--gray-200) !important;
+    border-radius: var(--radius) !important;
+    margin-bottom: 0 !important;
+}
+
+/* --- Horizontal tabs (change form) --- */
+.nav-tabs {
+    border-bottom: none !important;
+    background: var(--white) !important;
+    padding: 0 16px !important;
+    gap: 0 !important;
+    border-radius: var(--radius) var(--radius) 0 0 !important;
+    border: 1px solid var(--gray-200) !important;
+    border-bottom: none !important;
+}
+.nav-tabs .nav-item {
+    margin-bottom: 0 !important;
+}
+.nav-tabs .nav-link {
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    color: var(--gray-400) !important;
+    font-weight: 600 !important;
+    padding: 14px 22px !important;
+    font-size: 0.84rem !important;
+    transition: var(--transition) !important;
+    position: relative !important;
+    background: none !important;
+    white-space: nowrap !important;
+}
+.nav-tabs .nav-link:hover {
+    color: var(--primary) !important;
+    background: var(--primary-light) !important;
+    border-bottom-color: rgba(67, 97, 238, 0.3) !important;
+}
+.nav-tabs .nav-link.active {
+    color: var(--primary) !important;
+    border-bottom: 3px solid var(--primary) !important;
+    background: var(--primary-light) !important;
+    font-weight: 700 !important;
+}
+
+.tab-content {
+    background: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--radius) var(--radius) !important;
+    padding: 0 !important;
+}
+
+.tab-content > .tab-pane {
+    padding: 0 !important;
+}
+
+/* --- Submit row: sidebar vertical layout --- */
+.submit-row {
+    position: static !important;
+    float: none !important;
+    width: 100% !important;
+    background: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+    border-radius: var(--radius) !important;
+    padding: 14px !important;
+    margin: 0 0 12px 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+/* Remove Jazzmin's sticky/absolute positioning for submit row */
+.submit-row.fixed-top,
+.submit-row.sticky-top {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+}
+
+.submit-row input[type="submit"],
+.submit-row button,
+.submit-row a.button {
+    border-radius: var(--radius-xs) !important;
+    padding: 8px 14px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    letter-spacing: 0.2px !important;
+    width: 100% !important;
+    text-align: center !important;
+}
+
+/* Force ALL submit-row buttons to black bg + white text */
+.submit-row input[type="submit"],
+.submit-row input.btn,
+.submit-row input.btn-success,
+.submit-row input.btn-info,
+.submit-row input.btn-primary,
+.submit-row input.btn-warning,
+.submit-row input.btn-danger,
+.submit-row input.btn-secondary,
+.submit-row input.default,
+input[type="submit"].default,
+.submit-row input[name="_save"],
+.submit-row input[name="_addanother"],
+.submit-row input[name="_continue"] {
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    border: none !important;
+}
+.submit-row input[type="submit"]:hover,
+.submit-row input.btn:hover,
+.submit-row input.btn-success:hover,
+.submit-row input.btn-info:hover,
+.submit-row input.btn-primary:hover {
+    background: #000000 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Delete link - black */
+.submit-row a.deletelink,
+.submit-row .deletelink-box a,
+.deletelink-box a.deletelink {
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+}
+.submit-row a.deletelink:hover,
+.deletelink-box a.deletelink:hover {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* History link - black */
+.submit-row a.historylink,
+.submit-row a.btn {
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+    border-color: #1a1a1a !important;
+}
+.submit-row a.historylink:hover,
+.submit-row a.btn:hover {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* Delete link */
+.submit-row .deletelink-box {
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+/* === 12. Dashboard Home === */
+#content-main .module {
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--gray-200) !important;
+    overflow: hidden !important;
+    box-shadow: var(--shadow-sm) !important;
+    margin-bottom: 1.25rem !important;
+}
+
+#content-main .module caption,
+#content-main .module h2 {
+    background: var(--gray-50) !important;
+    color: var(--dark) !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    padding: 14px 20px !important;
+    border-bottom: 1px solid var(--gray-200) !important;
+}
+
+.dashboard #content-main {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 1.25rem !important;
+}
+
+.dashboard #content-main .module table td {
+    padding: 10px 16px !important;
+}
+.dashboard #content-main .module table td a {
+    color: var(--primary) !important;
+    font-weight: 500 !important;
+}
+.dashboard #content-main .module table th {
+    padding: 10px 16px !important;
+    background: var(--gray-50) !important;
+    font-size: 0.82rem !important;
+}
+
+/* Add/Change links in dashboard */
+.dashboard .addlink,
+.dashboard .changelink,
+.dashboard .viewlink {
+    font-size: 0.78rem !important;
+    padding: 3px 10px !important;
+    border-radius: 16px !important;
+    background: var(--primary-light) !important;
+    color: var(--primary) !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    transition: var(--transition) !important;
+}
+.dashboard .addlink:hover,
+.dashboard .changelink:hover,
+.dashboard .viewlink:hover {
+    background: var(--primary) !important;
+    color: var(--white) !important;
+}
+
+/* Recent actions */
+#recent-actions-module {
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--gray-200) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+/* === 13. Messages & Alerts === */
+.messagelist li {
+    border-radius: var(--radius-xs) !important;
+    padding: 12px 18px !important;
+    margin-bottom: 10px !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+}
+.messagelist .success {
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+.messagelist .warning {
+    background: #fffbeb !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+}
+.messagelist .error {
+    background: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
+}
+.messagelist .info {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+/* === 14. Buttons === */
+.btn {
+    border-radius: var(--radius-xs) !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 18px !important;
+    transition: var(--transition) !important;
+}
+.btn-primary:not(.submit-row *), .btn-info:not(.submit-row *) {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+.btn-primary:not(.submit-row *):hover, .btn-info:not(.submit-row *):hover {
+    background: var(--primary-dark) !important;
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3) !important;
+}
+.btn-success:not(.submit-row *) {
+    background: var(--success) !important;
+    border-color: var(--success) !important;
+    color: var(--white) !important;
+}
+.btn-danger:not(.submit-row *) {
+    background: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+.btn-warning {
+    background: var(--warning) !important;
+    border-color: var(--warning) !important;
+    color: var(--dark) !important;
+}
+
+/* Object tools (Add new, Import, Export) */
+.object-tools {
+    display: flex !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+    padding: 0 !important;
+    list-style: none !important;
+    flex-wrap: wrap !important;
+}
+.object-tools li {
+    margin: 0 !important;
+}
+.object-tools a {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 8px 18px !important;
+    border-radius: var(--radius-xs) !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    color: var(--white) !important;
+    background: var(--primary) !important;
+    transition: var(--transition) !important;
+}
+.object-tools a:hover {
+    background: var(--primary-dark) !important;
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3) !important;
+    transform: translateY(-1px) !important;
+}
+.object-tools .addlink {
+    background: var(--success) !important;
+}
+.object-tools .addlink:hover {
+    background: #05c793 !important;
+    box-shadow: 0 4px 12px rgba(6, 214, 160, 0.3) !important;
+}
+
+/* === 15. Login Page === */
+body.login {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-3) 50%, var(--primary-dark) 100%) !important;
+}
+body.login #content-main {
+    background: var(--white) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+    padding: 2.5rem !important;
+    max-width: 420px !important;
+    margin: 0 auto !important;
+}
+body.login #header {
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 2rem 0 0.5rem !important;
+}
+body.login #header h1 {
+    color: var(--white) !important;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+}
+body.login input[type="text"],
+body.login input[type="password"] {
+    width: 100% !important;
+    height: 46px !important;
+    border-radius: var(--radius-xs) !important;
+    margin-bottom: 12px !important;
+}
+body.login input[type="submit"] {
+    width: 100% !important;
+    height: 46px !important;
+    background: var(--primary) !important;
+    color: var(--white) !important;
+    border: none !important;
+    border-radius: var(--radius-xs) !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+}
+body.login input[type="submit"]:hover {
+    background: var(--primary-dark) !important;
+    box-shadow: 0 8px 25px rgba(67, 97, 238, 0.3) !important;
+}
+
+/* === 16. Help text & Inline errors === */
+.help, .helptext {
+    font-size: 0.78rem !important;
+    color: var(--gray-400) !important;
+}
+.errorlist li {
+    color: var(--danger) !important;
+    font-size: 0.82rem !important;
+}
+.errornote {
+    background: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    color: #991b1b !important;
+    border-radius: var(--radius-xs) !important;
+    padding: 12px 18px !important;
+}
+
+/* === 17. Inline Admins === */
+.inline-group .tabular td,
+.inline-group .tabular th {
+    padding: 8px 12px !important;
+}
+.inline-group h2 {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    color: var(--dark) !important;
+    padding: 12px 16px !important;
+    background: var(--gray-50) !important;
+    border-bottom: 1px solid var(--gray-200) !important;
+}
+.inline-related .add-row a {
+    color: var(--primary) !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+}
+
+/* === 18. Import/Export Page === */
+.import-export {
+    background: var(--white) !important;
+    border-radius: var(--radius) !important;
+    padding: 24px !important;
+    box-shadow: var(--shadow) !important;
+}
+
+/* === 19. Related Widget Popup === */
+.related-widget-wrapper {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+.related-widget-wrapper .related-lookup,
+.related-widget-wrapper .add-related,
+.related-widget-wrapper .change-related,
+.related-widget-wrapper .delete-related {
+    border-radius: var(--radius-xs) !important;
+    padding: 4px 8px !important;
+    transition: var(--transition) !important;
+}
+
+/* === 20. Footer === */
+.main-footer {
+    background: var(--white) !important;
+    border-top: 1px solid var(--gray-200) !important;
+    font-size: 0.78rem !important;
+    color: var(--gray-400) !important;
+    padding: 10px 20px !important;
+}
+
+/* === 21. Scrollbar === */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--gray-100);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+}
+
+/* === 22. Status Badges (via CSS attr) === */
+td img[src*="icon-yes"],
+td img[src*="icon-no"],
+td img[src*="icon-unknown"] {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* Add badge-style to boolean fields */
+.field-status select,
+td .mini {
+    border-radius: 20px !important;
+    padding: 3px 12px !important;
+}
+
+/* === 23. Responsive === */
+@media (max-width: 992px) {
+    .app-wrapper {
+        grid-template-columns: 1fr !important;
+    }
+    
+    #changelist-filter {
+        flex-direction: column !important;
+    }
+    
+    #changelist-filter details {
+        max-width: 100% !important;
+    }
+    
+    .dashboard #content-main {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-wrapper > .content {
+        padding: 0.75rem !important;
+    }
+    
+    table thead th,
+    table tbody td {
+        padding: 8px 10px !important;
+        font-size: 0.78rem !important;
+    }
+    
+    .actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .object-tools {
+        flex-direction: column !important;
+    }
+}
+
+/* === 24. Column Layout Fix: Full Width (changelist only) === */
+#changelist .row > [class*="col-md-"],
+#changelist .row > [class*="col-lg-"],
+#changelist .row > [class*="col-"] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+}
+
+/* Force filter panel full width */
+#changelist-filter {
+    position: relative !important;
+}
+
+/* === 25. Selection & Focus States === */
+::selection {
+    background: rgba(67, 97, 238, 0.15);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--primary) !important;
+    outline-offset: 2px !important;
+}
+
+/* === 26. Tooltip & Popover === */
+[title] {
+    position: relative;
+}
+
+/* === 27. Empty State === */
+.paginator .this-page:only-child {
+    display: none !important;
+}
+
+p.paginator {
+    text-align: center !important;
+    color: var(--gray-600) !important;
+    font-size: 0.85rem !important;
+    padding: 12px !important;
+}
+
+/* === 28. Loading Animation for links === */
+.object-tools a:active,
+.submit-row input:active {
+    transform: scale(0.97) !important;
+}
+
+/* === 29. Change Form Page - Professional Layout === */
+
+/* Form main column */
+.change-form .form-main-col,
+.form-main-col {
+    flex: 0 0 75% !important;
+    max-width: 75% !important;
+}
+
+/* Actions sidebar column */
+.change-form .actions-sidebar-col,
+.actions-sidebar-col {
+    flex: 0 0 25% !important;
+    max-width: 25% !important;
+}
+
+/* Sticky sidebar */
+.actions-sidebar-sticky {
+    position: sticky !important;
+    top: 16px !important;
+}
+
+/* Card containing the form */
+.change-form .card,
+#content-main .card {
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--gray-200) !important;
+    box-shadow: var(--shadow) !important;
+    overflow: visible !important;
+}
+
+/* Form field containers with grid */
+.form-row .flex-container {
+    display: flex !important;
+    gap: 16px !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+}
+
+/* Autocomplete widgets */
+.related-widget-wrapper {
+    width: 100% !important;
+    max-width: 400px !important;
+}
+.related-widget-wrapper select,
+.related-widget-wrapper input {
+    width: 100% !important;
+}
+
+/* File inputs */
+input[type="file"] {
+    padding: 8px !important;
+    border: 1.5px dashed var(--gray-300) !important;
+    border-radius: var(--radius-xs) !important;
+    background: var(--gray-50) !important;
+    cursor: pointer !important;
+    font-size: 0.84rem !important;
+    max-width: 400px !important;
+    width: 100% !important;
+}
+input[type="file"]:hover {
+    border-color: var(--primary) !important;
+    background: var(--primary-light) !important;
+}
+
+/* Date inputs */
+input[type="date"] {
+    max-width: 200px !important;
+}
+
+/* Number inputs */
+input[type="number"] {
+    max-width: 200px !important;
+}
+
+/* Select menus */
+select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a6178' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: left 12px center !important;
+    padding-left: 32px !important;
+}
+
+/* Sort handle & drag items */
+.ui-sortable-handle {
+    cursor: move !important;
+}
+
+/* === 30. Page Title Enhancement === */
+.content-header .container-fluid {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+/* === 31. Object-tools (top buttons row) on change form === */
+.change-form .object-tools,
+#content-main .object-tools {
+    margin-bottom: 12px !important;
+    justify-content: flex-start !important;
+}
+
+/* === 32. Collapse toggle enhancement === */
+fieldset.collapse h2 {
+    cursor: pointer !important;
+    position: relative !important;
+}
+fieldset.collapse h2::after {
+    content: "\f078" !important;
+    font-family: 'Font Awesome 5 Free' !important;
+    font-weight: 900 !important;
+    font-size: 0.65rem !important;
+    position: absolute !important;
+    left: 20px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: var(--gray-400) !important;
+    transition: var(--transition) !important;
+}
+fieldset.collapse.show h2::after,
+fieldset.collapse[open] h2::after {
+    transform: translateY(-50%) rotate(180deg) !important;
+}
+
+/* === 33. Admin action row on change list === */
+.changelist-form-container {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* === 34. Empty value display === */
+.empty-value,
+span.empty {
+    color: var(--gray-300) !important;
+    font-style: italic !important;
+    font-size: 0.82rem !important;
+}
+
+/* === 35. Calendar & Date widgets === */
+.calendarbox {
+    border-radius: var(--radius) !important;
+    overflow: hidden !important;
+    box-shadow: var(--shadow-lg) !important;
+    border: 1px solid var(--gray-200) !important;
+}
+.calendar caption {
+    background: var(--primary) !important;
+    color: var(--white) !important;
+    font-weight: 700 !important;
+    padding: 8px !important;
+}
+.calendar td a {
+    border-radius: 50% !important;
+    transition: var(--transition) !important;
+}
+.calendar td a:hover {
+    background: var(--primary-light) !important;
+    color: var(--primary) !important;
+}
+
+/* === 36. Jazzmin sticky action override for change form === */
+div.sticky-top.submit-row,
+.submit-row.sticky-top,
+.submit-row[style*="position"] {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+    width: 100% !important;
+    float: none !important;
+}
+
+/* === 37. Actions Sidebar - Object Tools === */
+.actions-sidebar-col .object-tools {
+    flex-direction: column !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.actions-sidebar-col .object-tools li {
+    margin: 0 !important;
+    width: 100% !important;
+}
+.actions-sidebar-col .object-tools a {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 8px 14px !important;
+    font-size: 0.78rem !important;
+}
+
+/* === 38. Responsive: sidebar stacks on small screens === */
+@media (max-width: 991px) {
+    .change-form .form-main-col,
+    .form-main-col {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .change-form .actions-sidebar-col,
+    .actions-sidebar-col {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .actions-sidebar-sticky {
+        position: static !important;
+    }
+    .submit-row {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+    }
+    .submit-row input[type="submit"],
+    .submit-row button,
+    .submit-row a.button,
+    .submit-row a.deletelink,
+    .submit-row a.historylink {
+        width: auto !important;
+        flex: 0 1 auto !important;
+    }
+    .submit-row .deletelink-box {
+        width: auto !important;
+    }
+}
+
+/* === FINAL: Force black buttons in submit-row (must be last) === */
+.submit-row input[type="submit"].btn.btn-sm.btn-success,
+.submit-row input[type="submit"].btn.btn-sm.btn-info,
+.submit-row input[type="submit"].btn.btn-sm.btn-primary,
+.submit-row input[type="submit"].btn.btn-sm.btn-danger,
+.submit-row input[type="submit"].btn.btn-sm.btn-warning,
+.submit-row input[type="submit"].btn.btn-sm.btn-secondary,
+.submit-row input[type="submit"],
+.submit-row .btn {
+    background: #1a1a1a !important;
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+    border-color: #1a1a1a !important;
+}
+.submit-row input[type="submit"]:hover,
+.submit-row .btn:hover {
+    background: #000000 !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+}
+.submit-row a.deletelink,
+.submit-row .deletelink-box a {
+    background: #1a1a1a !important;
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+.submit-row a.deletelink:hover {
+    background: #000000 !important;
+    background-color: #000000 !important;
+}
+.submit-row a.historylink {
+    background: #1a1a1a !important;
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+    border-color: #1a1a1a !important;
+}
+.submit-row a.historylink:hover {
+    background: #000000 !important;
+    background-color: #000000 !important;
+}

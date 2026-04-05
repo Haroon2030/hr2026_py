@@ -1,0 +1,83 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}توليد كشف رواتب{% endblock %}
+
+{% block content %}
+<div style="max-width:520px; margin:40px auto;">
+
+    <h1 style="font-size:22px; font-weight:700; color:#1a1d2e; margin-bottom:6px;">
+        ⚙ توليد كشف الرواتب
+    </h1>
+    <p style="color:#6c757d; margin-bottom:28px; font-size:14px;">
+        اختر الشهر والسنة ثم اضغط <strong>توليد PDF</strong>.<br>
+        سيتم إنشاء فترة جديدة تلقائياً إن لم تكن موجودة، وتوليد رواتب جميع الموظفين النشطين.
+    </p>
+
+    <form method="post" style="
+        background:#fff;
+        border:1px solid #dee2e6;
+        border-radius:12px;
+        padding:32px 36px;
+        box-shadow:0 4px 16px rgba(0,0,0,.07);
+    ">
+        {% csrf_token %}
+
+        <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:28px;">
+
+            <!-- الشهر -->
+            <div style="flex:1; min-width:180px;">
+                <label for="id_month" style="
+                    display:block; font-weight:700; font-size:13px;
+                    color:#1a1d2e; margin-bottom:8px;
+                ">الشهر</label>
+                <select id="id_month" name="month" style="
+                    width:100%; padding:10px 14px; border:1px solid #ced4da;
+                    border-radius:8px; font-size:14px; background:#f8f9fa;
+                    appearance:auto;
+                ">
+                    {% for num, name in months %}
+                    <option value="{{ num }}" {% if num == current_month %}selected{% endif %}>
+                        {{ name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- السنة -->
+            <div style="flex:1; min-width:130px;">
+                <label for="id_year" style="
+                    display:block; font-weight:700; font-size:13px;
+                    color:#1a1d2e; margin-bottom:8px;
+                ">السنة</label>
+                <input id="id_year" name="year" type="number"
+                       value="{{ current_year }}" min="2000" max="2100"
+                       style="
+                           width:100%; padding:10px 14px; border:1px solid #ced4da;
+                           border-radius:8px; font-size:14px; background:#f8f9fa;
+                           box-sizing:border-box;
+                       ">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:12px; align-items:center;">
+            <button type="submit" style="
+                background:linear-gradient(135deg,#1a1d2e,#2d3250);
+                color:#fff; border:none; padding:12px 32px;
+                border-radius:8px; font-size:14px; font-weight:700;
+                cursor:pointer; box-shadow:0 3px 10px rgba(26,29,46,.3);
+                transition:opacity .2s;
+            "
+            onmouseover="this.style.opacity='.85'"
+            onmouseout="this.style.opacity='1'">
+                ⬇ توليد PDF
+            </button>
+
+            <a href="../" style="
+                color:#6c757d; font-size:14px; text-decoration:none;
+            ">إلغاء</a>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

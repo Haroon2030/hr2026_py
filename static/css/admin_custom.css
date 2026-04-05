@@ -1,0 +1,106 @@
+/* Fix Select2 Borders in Django Admin */
+.select2-container--admin-autocomplete .select2-selection--single,
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple,
+.select2-container--admin-autocomplete .select2-selection--multiple {
+    border: 2px solid #ddd !important;
+    border-radius: 6px !important;
+    min-height: 40px !important;
+    padding: 4px 8px !important;
+    background-color: #fff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.select2-container--admin-autocomplete .select2-selection--single:hover,
+.select2-container--default .select2-selection--single:hover {
+    border-color: #79aec8 !important;
+}
+
+.select2-container--admin-autocomplete.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #417690 !important;
+    box-shadow: 0 0 0 3px rgba(65, 118, 144, 0.15) !important;
+}
+
+.select2-container--admin-autocomplete .select2-selection--single .select2-selection__rendered,
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 30px !important;
+    color: #333 !important;
+    padding-right: 30px !important;
+    font-size: 14px !important;
+}
+
+.select2-container--admin-autocomplete .select2-selection--single .select2-selection__arrow,
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px !important;
+    width: 30px !important;
+}
+
+.select2-container--admin-autocomplete .select2-selection--single .select2-selection__placeholder,
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #999 !important;
+}
+
+/* Related Widget Wrapper - أيقونات التعديل والإضافة */
+.related-widget-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.related-widget-wrapper .select2-container {
+    flex: 1 !important;
+    min-width: 200px !important;
+}
+
+.related-widget-wrapper .related-widget-wrapper-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    background: #f8f9fa !important;
+    border: 1px solid #ddd !important;
+    border-radius: 6px !important;
+    transition: all 0.2s !important;
+}
+
+.related-widget-wrapper .related-widget-wrapper-link:hover {
+    background: #e9ecef !important;
+    border-color: #79aec8 !important;
+}
+
+.related-widget-wrapper .related-widget-wrapper-link img {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Dropdown Menu */
+.select2-dropdown {
+    border: 2px solid #79aec8 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.select2-results__option {
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+}
+
+.select2-results__option--highlighted {
+    background-color: #417690 !important;
+}
+
+/* Form row styling */
+.form-row {
+    padding: 12px 14px !important;
+    border-bottom: 1px solid #eee !important;
+}
+
+.form-row label {
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}

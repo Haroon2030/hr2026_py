@@ -1,0 +1,21 @@
+Django>=5.1,<5.3
+python-dotenv>=1.0.0
+django-import-export>=4.0.0
+django-admin-rangefilter>=0.12.0
+Pillow>=10.0.0
+reportlab>=4.0.0
+django-storages>=1.14.0
+boto3>=1.34.0
+openpyxl>=3.1.0
+
+# ==============================
+# للإنتاج / Production
+# ==============================
+gunicorn>=21.0.0
+whitenoise>=6.6.0
+
+# ==============================
+# اختياري / Optional
+# ==============================
+# mysqlclient>=2.2.0  # فعّل هذا إذا استخدمت MySQL
+# psycopg2-binary>=2.9.9  # فعّل هذا إذا استخدمت PostgreSQL

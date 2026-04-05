@@ -1,0 +1,1605 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<style>
+    * { font-family: 'Tajawal', sans-serif; }
+    
+    .dashboard-container {
+        direction: rtl;
+        text-align: right;
+        padding: 20px;
+        background-color: #f8fbff; /* Very pale blue/white background matching image */
+        min-height: 100vh;
+    }
+    
+    .dash-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    .dash-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #1a1d2e;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .dash-subtitle {
+        font-size: 15px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .alert-danger-custom {
+        background-color: #f14141;
+        color: white;
+        border-radius: 12px;
+        padding: 20px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(241, 65, 65, 0.2);
+    }
+    .alert-danger-custom h4 { margin: 0; font-weight: 800; font-size: 18px; }
+    .alert-danger-custom p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
+    .alert-danger-custom i { font-size: 28px; }
+
+    .alert-white-custom {
+        background-color: #ffffff;
+        color: #6c757d;
+        border-radius: 12px;
+        padding: 15px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        font-weight: 500;
+        border: 1px solid #f1f3f5;
+    }
+    .alert-white-custom i { color: #adb5bd; }
+
+    /* Layout */
+    .dash-grid {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .dash-main { flex: 1; min-width: 60%; }
+    .dash-sidebar { width: 320px; flex-shrink: 0; }
+
+    @media (max-width: 991px) {
+        .dash-sidebar { width: 100%; order: 2; }
+        .dash-main { order: 1; }
+    }
+
+    /* Cards */
+    .card-box {
+        background: #fff;
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid #f8f9fa;
+    }
+
+    /* Inbox */
+    .inbox-title {
+        font-weight: 800;
+        font-size: 18px;
+        color: #1a1d2e;
+        margin-bottom: 20px;
+    }
+    .inbox-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .inbox-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .inbox-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .icon-circle {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background-color: #f4f6fa;
+        color: #4a5568;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+    .inbox-text h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1d2e;
+    }
+    .pill {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        background-color: #ffe5e5;
+        color: #f14141;
+        margin-top: 8px;
+    }
+
+    /* Sidebar User profile */
+    .profile-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .profile-info h4 { margin: 0; font-weight: 800; font-size: 18px; color: #1a1d2e; }
+    .profile-info p { margin: 5px 0 0 0; font-size: 13px; color: #6c757d; }
+    .profile-avatar {
+        width: 50px; height: 50px;
+        border-radius: 50%;
+        background-color: #eaf1fa;
+        color: #4f80e1;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 20px;
+    }
+
+    /* Sidebar Stats */
+    .sidebar-stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .sidebar-stat-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .stat-text h5 { margin: 0; font-weight: 800; font-size: 16px; color: #1a1d2e; }
+    .stat-text p { margin: 3px 0 0 0; font-size: 12px; color: #6c757d; }
+    .stat-icon { color: #5a6a85; font-size: 18px; }
+
+    /* Employee Updates */
+    .updates-title {
+        font-weight: 800; font-size: 16px; color: #1a1d2e;
+        margin-bottom: 20px;
+        text-align: right;
+    }
+    .update-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .update-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .update-actions { display: flex; align-items: center; gap: 15px; }
+    .btn-view {
+        color: #1a1d2e;
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+    }
+    .update-icon {
+        width: 35px; height: 35px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .icon-green { background-color: #e5f5ef; color: #28a745; }
+    .icon-yellow { background-color: #fff6e5; color: #f5a623; }
+    .icon-red { background-color: #ffe5e5; color: #f14141; }
+</style>
+
+<div class="dashboard-container">
+    
+    <!-- Header -->
+    <div class="dash-header d-flex flex-wrap justify-content-between align-items-center">
+        <div class="mb-3 mb-md-0">
+            <div class="dash-title">
+                هلا بك يا {{ request.user.first_name|default:"مدير" }} 
+                <i class="fas fa-cloud-sun" style="color: #1a1d2e;"></i>
+            </div>
+            <div class="dash-subtitle">تابع أهم التحديثات في بداية يومك من هنا</div>
+        </div>
+        
+        <div class="dash-actions d-flex gap-2 align-items-center">
+            <!-- CSRF token للطلبات الـ AJAX -->
+            <input type="hidden" id="nrCsrfToken" value="{{ csrf_token }}">
+            <!-- زر طلب جديد مع قائمة منسدلة -->
+            <div class="position-relative" id="nrDropdownWrapper">
+                <button class="btn btn-primary shadow-sm" type="button" id="nrToggleBtn"
+                    style="padding: 12px 25px; border-radius: 12px; font-weight: 700; font-size: 16px; background: linear-gradient(135deg, #4f80e1, #3b66b8); border: none;">
+                    <i class="fas fa-plus-circle me-2"></i> طلب جديد
+                </button>
+
+                <!-- القائمة المنسدلة -->
+                <div id="nrDropdown" style="display:none; position:absolute; top:calc(100% + 10px); left:0; width:340px; z-index:9999;
+                    background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,.15); overflow:hidden; font-family:'Tajawal',sans-serif;">
+
+                    <!-- خطوة 1: اختيار الموظف -->
+                    <div id="nrStep1">
+                        <div style="background:linear-gradient(135deg,#4f80e1,#3b66b8); padding:16px 18px;">
+                            <div style="color:#fff; font-weight:800; font-size:15px; margin-bottom:4px;">
+                                <i class="fas fa-search me-1"></i> اختر الموظف
+                            </div>
+                            <div style="color:rgba(255,255,255,.8); font-size:12px;">ابحث بالاسم أو رقم الموظف</div>
+                        </div>
+                        <div style="padding:14px 14px 6px;">
+                            <input type="text" id="nrEmpSearch" placeholder="ابحث..." autocomplete="off"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; direction:rtl; outline:none;">
+                        </div>
+                        <div id="nrEmpList" style="max-height:280px; overflow-y:auto; padding:6px 14px 14px;"></div>
+                        <div style="padding:10px 14px 14px; border-top:1px solid #f1f3f5; text-align:center; font-size:13px; color:#6c757d;">
+                            أو <a href="{% url 'admin:employee_ops_employeefileproxy_add' %}" style="color:#4f80e1;font-weight:700;">أضف موظف جديد</a>
+                        </div>
+                    </div>
+
+                    <!-- خطوة 2: اختيار العملية -->
+                    <div id="nrStep2" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#4f80e1,#3b66b8); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                            <button onclick="nrGoBack()" style="background:rgba(255,255,255,.2); border:none; border-radius:8px; color:#fff; padding:5px 10px; cursor:pointer; font-size:13px;">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div>
+                                <div style="color:#fff; font-weight:800; font-size:14px;" id="nrSelName">—</div>
+                                <div style="color:rgba(255,255,255,.8); font-size:11px;" id="nrSelNum"></div>
+                            </div>
+                        </div>
+                        <div id="nrOpsList" style="padding:8px 8px 10px;"></div>
+                    </div>
+
+                    <!-- خطوة 3: إنهاء الخدمة -->
+                    <div id="nrStep3" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#dc3545,#b02a37); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                            <button onclick="nrGoStep2()" style="background:rgba(255,255,255,.2); border:none; border-radius:8px; color:#fff; padding:5px 10px; cursor:pointer; font-size:13px;">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div>
+                                <div style="color:#fff; font-weight:800; font-size:14px;"><i class="fas fa-user-times me-1"></i> إنهاء الخدمة</div>
+                                <div style="color:rgba(255,255,255,.8); font-size:11px;" id="nrS3EmpName"></div>
+                            </div>
+                        </div>
+                        <div style="padding:16px 16px 6px;">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-calendar-times" style="color:#dc3545; margin-left:5px;"></i>آخر تاريخ عمل
+                            </label>
+                            <input type="date" id="nrLastWorkDate"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr;">
+                        </div>
+                        <div style="padding:10px 16px 16px;">
+                            <button onclick="nrSubmitTermination()" id="nrTermBtn"
+                                style="width:100%; background:linear-gradient(135deg,#dc3545,#b02a37); color:#fff; border:none;
+                                border-radius:10px; padding:12px; font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer;">
+                                <i class="fas fa-save me-1"></i> حفظ الطلب
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- خطوة 3b: تعديل الراتب -->
+                    <div id="nrStep3b" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#6f42c1,#563399); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                            <button onclick="nrGoStep2()" style="background:rgba(255,255,255,.2); border:none; border-radius:8px; color:#fff; padding:5px 10px; cursor:pointer; font-size:13px;">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div>
+                                <div style="color:#fff; font-weight:800; font-size:14px;"><i class="fas fa-hand-holding-usd me-1"></i> تعديل الراتب</div>
+                                <div style="color:rgba(255,255,255,.8); font-size:11px;" id="nrS3bEmpName"></div>
+                            </div>
+                        </div>
+                        <div style="padding:16px 16px 0px;">
+                            <div id="nrCurrentSalaryRow" style="display:none; margin-bottom:12px; padding:10px 14px; background:#f8f9fa; border-radius:10px; font-size:13px; color:#6c757d;">
+                                الراتب الحالي: <strong id="nrCurrentSalaryVal" style="color:#1a1d2e;"></strong> ريال
+                            </div>
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-arrow-trend-up" style="color:#6f42c1; margin-left:5px;"></i>مبلغ الزيادة (ريال)
+                            </label>
+                            <input type="number" id="nrSalaryIncrease" min="1" step="0.01" placeholder="0.00"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;"
+                                oninput="nrUpdateNewSalary()">
+                            <div id="nrNewSalaryPreview" style="display:none; padding:10px 14px; background:#eef3fc; border-radius:10px; font-size:13px; color:#4f80e1; margin-bottom:14px;">
+                                الراتب الجديد: <strong id="nrNewSalaryVal"></strong> ريال
+                            </div>
+                        </div>
+                        <div style="padding:4px 16px 16px;">
+                            <button onclick="nrSubmitSalaryAdj()" id="nrSalaryBtn"
+                                style="width:100%; background:linear-gradient(135deg,#6f42c1,#563399); color:#fff; border:none;
+                                border-radius:10px; padding:12px; font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer;">
+                                <i class="fas fa-save me-1"></i> حفظ التعديل
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- خطوة 3c: طلب سلفة -->
+                    <div id="nrStep3c" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#28a745,#1e7e34); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                            <button onclick="nrGoStep2()" style="background:rgba(255,255,255,.2); border:none; border-radius:8px; color:#fff; padding:5px 10px; cursor:pointer; font-size:13px;">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div>
+                                <div style="color:#fff; font-weight:800; font-size:14px;"><i class="fas fa-money-bill-wave me-1"></i> طلب سلفة</div>
+                                <div style="color:rgba(255,255,255,.8); font-size:11px;" id="nrS3cEmpName"></div>
+                            </div>
+                        </div>
+                        <div style="padding:16px 16px 0px;">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-coins" style="color:#28a745; margin-left:5px;"></i>مبلغ السلفة (ريال)
+                            </label>
+                            <input type="number" id="nrAdvanceAmount" min="1" step="0.01" placeholder="0.00"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;"
+                                oninput="nrUpdateInstallment()">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-list-ol" style="color:#28a745; margin-left:5px;"></i>عدد الأقساط
+                            </label>
+                            <input type="number" id="nrAdvanceInstallments" min="1" max="24" value="1"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;"
+                                oninput="nrUpdateInstallment()">
+                            <div id="nrInstallmentPreview" style="display:none; padding:10px 14px; background:#d6f0de; border-radius:10px; font-size:13px; color:#28a745; margin-bottom:14px;">
+                                قيمة القسط: <strong id="nrInstallmentVal"></strong> ريال
+                            </div>
+                        </div>
+                        <div style="padding:4px 16px 16px;">
+                            <button onclick="nrSubmitAdvance()" id="nrAdvanceBtn"
+                                style="width:100%; background:linear-gradient(135deg,#28a745,#1e7e34); color:#fff; border:none;
+                                border-radius:10px; padding:12px; font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer;">
+                                <i class="fas fa-save me-1"></i> حفظ الطلب
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- خطوة 3d: طلب إجازة -->
+                    <div id="nrStep3d" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#f5a623,#d48c1a); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                            <button onclick="nrGoStep2()" style="background:rgba(255,255,255,.2); border:none; border-radius:8px; color:#fff; padding:5px 10px; cursor:pointer; font-size:13px;">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div>
+                                <div style="color:#fff; font-weight:800; font-size:14px;"><i class="fas fa-umbrella-beach me-1"></i> طلب إجازة</div>
+                                <div style="color:rgba(255,255,255,.8); font-size:11px;" id="nrS3dEmpName"></div>
+                            </div>
+                        </div>
+                        <div style="padding:16px 16px 0px;">
+                            <!-- رصيد الإجازات -->
+                            <div id="nrVacationBalanceRow" style="margin-bottom:12px; padding:10px 14px; background:#fff3d6; border-radius:10px; font-size:13px; color:#f5a623;">
+                                <i class="fas fa-calendar-check me-1"></i> الرصيد المتاح: <strong id="nrVacationBalance">جارٍ الحساب...</strong>
+                            </div>
+                            <!-- بداية الإجازة -->
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-calendar-day" style="color:#f5a623; margin-left:5px;"></i>بداية الإجازة
+                            </label>
+                            <input type="date" id="nrVacationStart"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;">
+                            <!-- عدد الأيام -->
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-hashtag" style="color:#f5a623; margin-left:5px;"></i>عدد الأيام
+                            </label>
+                            <input type="number" id="nrVacationDays" min="1" max="60" placeholder="0"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;"
+                                oninput="nrValidateVacationDays()" onchange="nrValidateVacationDays()">
+                            <!-- ملاحظة -->
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-sticky-note" style="color:#f5a623; margin-left:5px;"></i>ملاحظة (اختياري)
+                            </label>
+                            <textarea id="nrVacationNotes" rows="2" placeholder="ملاحظات..."
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:rtl; margin-bottom:14px; resize:none;"></textarea>
+                        </div>
+                        <div style="padding:4px 16px 16px;">
+                            <button onclick="nrSubmitVacation()" id="nrVacationBtn"
+                                style="width:100%; background:linear-gradient(135deg,#f5a623,#d48c1a); color:#fff; border:none;
+                                border-radius:10px; padding:12px; font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer;">
+                                <i class="fas fa-save me-1"></i> حفظ الطلب
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- خطوة 3e: إضافة مخالفة -->
+                    <div id="nrStep3e" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#fd7e14,#dc6a0f); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                            <button onclick="nrGoStep2()" style="background:rgba(255,255,255,.2); border:none; border-radius:8px; color:#fff; padding:5px 10px; cursor:pointer; font-size:13px;">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div>
+                                <div style="color:#fff; font-weight:800; font-size:14px;"><i class="fas fa-exclamation-triangle me-1"></i> تسجيل مخالفة</div>
+                                <div style="color:rgba(255,255,255,.8); font-size:11px;" id="nrS3eEmpName"></div>
+                            </div>
+                        </div>
+                        <div style="padding:16px 16px 0px;">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-tag" style="color:#fd7e14; margin-left:5px;"></i>نوع المخالفة
+                            </label>
+                            <select id="nrViolationType"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:rtl; margin-bottom:14px; background:#fff;">
+                                <option value="">-- اختر نوع المخالفة --</option>
+                                <option value="غياب بدون إذن">غياب بدون إذن</option>
+                                <option value="تأخر عن العمل">تأخر عن العمل</option>
+                                <option value="مغادرة مبكرة">مغادرة مبكرة</option>
+                                <option value="إهمال في العمل">إهمال في العمل</option>
+                                <option value="سوء سلوك">سوء سلوك</option>
+                                <option value="مخالفة أنظمة الشركة">مخالفة أنظمة الشركة</option>
+                                <option value="أخرى">أخرى</option>
+                            </select>
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-calendar" style="color:#fd7e14; margin-left:5px;"></i>تاريخ المخالفة
+                            </label>
+                            <input type="date" id="nrViolationDate"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-file-alt" style="color:#fd7e14; margin-left:5px;"></i>ملاحظات المخالفة
+                            </label>
+                            <textarea id="nrViolationNotes" rows="2" placeholder="وصف المخالفة..."
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:rtl; margin-bottom:14px; resize:none;"></textarea>
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-paperclip" style="color:#fd7e14; margin-left:5px;"></i>إرفاق ملف (اختياري)
+                            </label>
+                            <div style="position:relative; margin-bottom:14px;">
+                                <input type="file" id="nrViolationFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                    style="position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2;">
+                                <div id="nrViolationFileLabel" style="border:2px dashed #e8ecf4; border-radius:10px; padding:14px; text-align:center; background:#fafbfc; cursor:pointer;">
+                                    <i class="fas fa-cloud-upload-alt" style="font-size:20px; color:#adb5bd; margin-bottom:6px; display:block;"></i>
+                                    <span style="font-size:13px; color:#6c757d;">اضغط لاختيار ملف أو اسحب وأفلت</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding:4px 16px 16px;">
+                            <button onclick="nrSubmitViolation()" id="nrViolationBtn"
+                                style="width:100%; background:linear-gradient(135deg,#fd7e14,#dc6a0f); color:#fff; border:none;
+                                border-radius:10px; padding:12px; font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer;">
+                                <i class="fas fa-save me-1"></i> حفظ المخالفة
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- خطوة 3f: عذر طبي -->
+                    <div id="nrStep3f" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#e83e8c,#c21c5c); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                            <button onclick="nrGoStep2()" style="background:rgba(255,255,255,.2); border:none; border-radius:8px; color:#fff; padding:5px 10px; cursor:pointer; font-size:13px;">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div>
+                                <div style="color:#fff; font-weight:800; font-size:14px;"><i class="fas fa-notes-medical me-1"></i> عذر طبي</div>
+                                <div style="color:rgba(255,255,255,.8); font-size:11px;" id="nrS3fEmpName"></div>
+                            </div>
+                        </div>
+                        <div style="padding:16px 16px 0px;">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-calendar" style="color:#e83e8c; margin-left:5px;"></i>تاريخ العذر
+                            </label>
+                            <input type="date" id="nrMedicalDate"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-clock" style="color:#e83e8c; margin-left:5px;"></i>مدة العذر (أيام)
+                            </label>
+                            <input type="number" id="nrMedicalDuration" min="1" max="30" value="1"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-comment-medical" style="color:#e83e8c; margin-left:5px;"></i>سبب العذر
+                            </label>
+                            <textarea id="nrMedicalReason" rows="2" placeholder="سبب العذر الطبي..."
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:rtl; margin-bottom:14px; resize:none;"></textarea>
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-paperclip" style="color:#e83e8c; margin-left:5px;"></i>إرفاق التقرير الطبي
+                            </label>
+                            <div style="position:relative; margin-bottom:14px;">
+                                <input type="file" id="nrMedicalFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                    style="position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2;">
+                                <div id="nrMedicalFileLabel" style="border:2px dashed #e8ecf4; border-radius:10px; padding:14px; text-align:center; background:#fafbfc; cursor:pointer;">
+                                    <i class="fas fa-cloud-upload-alt" style="font-size:20px; color:#adb5bd; margin-bottom:6px; display:block;"></i>
+                                    <span style="font-size:13px; color:#6c757d;">اضغط لاختيار ملف أو اسحب وأفلت</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding:4px 16px 16px;">
+                            <button onclick="nrSubmitMedicalExcuse()" id="nrMedicalBtn"
+                                style="width:100%; background:linear-gradient(135deg,#e83e8c,#c21c5c); color:#fff; border:none;
+                                border-radius:10px; padding:12px; font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer;">
+                                <i class="fas fa-save me-1"></i> حفظ العذر
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- خطوة 3g: نقل موظف -->
+                    <div id="nrStep3g" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#17a2b8,#117a8b); padding:14px 18px; display:flex; align-items:center; gap:10px;">
+                            <button onclick="nrGoStep2()" style="background:rgba(255,255,255,.2); border:none; border-radius:8px; color:#fff; padding:5px 10px; cursor:pointer; font-size:13px;">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div>
+                                <div style="color:#fff; font-weight:800; font-size:14px;"><i class="fas fa-exchange-alt me-1"></i> نقل موظف</div>
+                                <div style="color:rgba(255,255,255,.8); font-size:11px;" id="nrS3gEmpName"></div>
+                            </div>
+                        </div>
+                        <div style="padding:16px 16px 0px;">
+                            <!-- الفرع والقسم الحالي -->
+                            <div id="nrTransferCurrentInfo" style="margin-bottom:14px; padding:12px 14px; background:#d6eef5; border-radius:10px; font-size:13px; color:#117a8b;">
+                                <i class="fas fa-map-marker-alt me-1"></i> 
+                                الفرع الحالي: <strong id="nrCurrentBranchDisplay">—</strong>
+                                <span style="margin:0 8px;">|</span>
+                                القسم: <strong id="nrCurrentDeptDisplay">—</strong>
+                            </div>
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-building" style="color:#17a2b8; margin-left:5px;"></i>الفرع الجديد
+                            </label>
+                            <select id="nrNewBranch"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:rtl; margin-bottom:14px; background:#fff;">
+                                <option value="">-- اختر الفرع الجديد --</option>
+                            </select>
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-sitemap" style="color:#17a2b8; margin-left:5px;"></i>القسم الجديد
+                            </label>
+                            <select id="nrNewDepartment"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:rtl; margin-bottom:14px; background:#fff;">
+                                <option value="">-- اختر القسم الجديد --</option>
+                            </select>
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-calendar" style="color:#17a2b8; margin-left:5px;"></i>تاريخ النقل المفضل
+                            </label>
+                            <input type="date" id="nrTransferDate"
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:ltr; margin-bottom:14px;">
+                            <label style="font-size:13px; font-weight:700; color:#1a1d2e; display:block; margin-bottom:6px;">
+                                <i class="fas fa-comment-alt" style="color:#17a2b8; margin-left:5px;"></i>سبب النقل
+                            </label>
+                            <textarea id="nrTransferReason" rows="2" placeholder="سبب طلب النقل..."
+                                style="width:100%; border:2px solid #e8ecf4; border-radius:10px; padding:10px 14px;
+                                font-size:14px; font-family:'Tajawal',sans-serif; outline:none; direction:rtl; margin-bottom:14px; resize:none;"></textarea>
+                        </div>
+                        <div style="padding:4px 16px 16px;">
+                            <button onclick="nrSubmitTransfer()" id="nrTransferBtn"
+                                style="width:100%; background:linear-gradient(135deg,#17a2b8,#117a8b); color:#fff; border:none;
+                                border-radius:10px; padding:12px; font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer;">
+                                <i class="fas fa-save me-1"></i> حفظ طلب النقل
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Red -->
+    {% if needs_approval_count > 0 %}
+    <div class="alert-danger-custom">
+        <div>
+            <h4>إجراءات معلقة تحتاج للمراجعة</h4>
+            <p>لديك {{ needs_approval_count }} طلب معلق يحتاج إلى موافقة أو مراجعة</p>
+        </div>
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    {% endif %}
+
+    <!-- Alert White -->
+    <div class="alert-white-custom">
+        <div>لديك {{ approved_employees }} موظف نشط في المنشأة</div>
+        <i class="fas fa-chevron-left"></i>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="dash-grid">
+        
+        <!-- Main Content (Right in RTL) -->
+        <div class="dash-main">
+            <div class="card-box" style="min-height: 500px;">
+                <div class="inbox-title">الوارد</div>
+                
+                <a href="{% url 'admin:employee_ops_employeetransferrequestproxy_changelist' %}?status__exact=pending" style="text-decoration: none; color: inherit; display: block;" class="inbox-item-container">
+                    <div class="inbox-item">
+                        <div class="inbox-info">
+                            <div class="icon-circle"><i class="fas fa-exchange-alt"></i></div>
+                            <div class="inbox-text">
+                                <h5>عرض طلبات النقل ({{ transfers_count }})</h5>
+                                <span class="pill">الأقدم قيد الانتظار: {{ oldest_transfer_days }} يوم</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{% url 'admin:employee_ops_advancefileproxy_changelist' %}?status__exact=pending" style="text-decoration: none; color: inherit; display: block;" class="inbox-item-container">
+                    <div class="inbox-item">
+                        <div class="inbox-info">
+                            <div class="icon-circle"><i class="fas fa-hand-holding-usd"></i></div>
+                            <div class="inbox-text">
+                                <h5>عرض السلف ({{ advances_count }})</h5>
+                                <span class="pill">إجمالي: {{ advances_pending_sum|floatformat:"0" }} ر.س</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{% url 'admin:employee_ops_terminationfileproxy_changelist' %}?status__exact=pending" style="text-decoration: none; color: inherit; display: block;" class="inbox-item-container">
+                    <div class="inbox-item">
+                        <div class="inbox-info">
+                            <div class="icon-circle"><i class="fas fa-user-times"></i></div>
+                            <div class="inbox-text">
+                                <h5>عرض إنهاء الخدمة ({{ terminations_count }})</h5>
+                                <span class="pill">مطلوب اتخاذ إجراء</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Sidebar (Left visually in RTL because it comes second) -->
+        <div class="dash-sidebar">
+            
+            <!-- User Profile & Top Stats -->
+            <div class="card-box">
+                <div class="profile-card" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #f1f3f5;">
+                    <div class="profile-info">
+                        <h4>{{ request.user.first_name|default:request.user.username }}</h4>
+                        <p>{{ request.user.get_role_display|default:"مدير النظام" }} • {{ request.user.id }}</p>
+                    </div>
+                    <div class="profile-avatar">{{ request.user.first_name|default:request.user.username|make_list|first|default:'م' }}</div>
+                </div>
+
+                <div class="sidebar-stat-item">
+                    <div class="stat-text">
+                        <h5>{{ total_pending }} طلب</h5>
+                        <p>قيد الاعتماد</p>
+                    </div>
+                    <i class="fas fa-inbox stat-icon"></i>
+                </div>
+                
+                <div class="sidebar-stat-item">
+                    <div class="stat-text">
+                        <h5>{{ total_employees }} موظف</h5>
+                        <p>إجمالي الموظفين</p>
+                    </div>
+                    <i class="fas fa-users align-items-center stat-icon"></i>
+                </div>
+                
+                <div class="sidebar-stat-item">
+                    <div class="stat-text">
+                        <h5>{{ advances_sum|floatformat:"0" }} ريال</h5>
+                        <p>إجمالي السلف</p>
+                    </div>
+                    <i class="fas fa-money-bill stat-icon"></i>
+                </div>
+            </div>
+
+            <!-- Employee Updates -->
+            <div class="card-box">
+                <div class="updates-title">مستجدات الموظفين</div>
+                
+                <div class="update-item">
+                    <div class="stat-text">
+                        <h5>{{ new_employees }} موظف</h5>
+                        <p>الموظفون الجدد</p>
+                    </div>
+                    <div class="update-actions">
+                        <a href="{% url 'admin:employee_ops_employeefileproxy_changelist' %}" class="btn-view">عرض</a>
+                        <div class="update-icon icon-green"><i class="fas fa-arrow-down"></i></div>
+                    </div>
+                </div>
+                
+                <div class="update-item">
+                    <div class="stat-text">
+                        <h5>{{ approved_employees }} موظف</h5>
+                        <p>المعتمدين</p>
+                    </div>
+                    <div class="update-actions">
+                        <a href="{% url 'admin:employee_ops_employeefileproxy_changelist' %}" class="btn-view">عرض</a>
+                        <div class="update-icon icon-yellow"><i class="fas fa-id-badge"></i></div>
+                    </div>
+                </div>
+                
+                <div class="update-item">
+                    <div class="stat-text">
+                        <h5>{{ leaving_employees }} موظف</h5>
+                        <p>سيغادر</p>
+                    </div>
+                    <div class="update-actions">
+                        <a href="{% url 'admin:employee_ops_terminationfileproxy_changelist' %}" class="btn-view">عرض</a>
+                        <div class="update-icon icon-red"><i class="fas fa-arrow-up"></i></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<style>
+.nr-emp-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  border: 2px solid transparent; transition: all .15s;
+  background: #f8fbff; margin-bottom: 6px;
+}
+.nr-emp-item:hover { border-color: #4f80e1; background: #eef3fc; }
+.nr-emp-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg,#4f80e1,#3b66b8);
+  color: #fff; font-weight: 800; font-size: 15px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.nr-emp-name { font-weight: 700; font-size: 13px; color: #1a1d2e; }
+.nr-emp-meta { font-size: 11px; color: #6c757d; margin-top: 1px; }
+.nr-op-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; text-decoration: none; color: #1a1d2e;
+  font-weight: 600; font-size: 14px; font-family: 'Tajawal', sans-serif;
+  transition: background .15s; border-radius: 8px;
+}
+.nr-op-item:hover { background: #f4f6fa; color: #1a1d2e; }
+.nr-op-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink:0;
+}
+</style>
+
+<script>
+(function() {
+  var SEARCH_URL = '/search-employees/';
+  var OPS = [
+    { label: 'طلب إجازة',           icon: 'fa-umbrella-beach',      color: '#f5a623', bg: '#fff3d6', url: '{% url "admin:employee_ops_statementfileproxy_add" %}', needsStep3d: true },
+    { label: 'سلفة مالية',          icon: 'fa-money-bill-wave',      color: '#28a745', bg: '#d6f0de', url: '{% url "admin:employee_ops_advancefileproxy_add" %}', needsStep3c: true },
+    { label: 'نقل موظف',            icon: 'fa-exchange-alt',         color: '#17a2b8', bg: '#d6eef5', url: '{% url "admin:employee_ops_employeetransferrequestproxy_add" %}', needsStep3g: true },
+    { label: 'عذر طبي',             icon: 'fa-notes-medical',        color: '#e83e8c', bg: '#fad6eb', url: '{% url "admin:employee_ops_medicalexcuseproxy_add" %}', needsStep3f: true },
+    { label: 'مخالفة',              icon: 'fa-exclamation-triangle', color: '#fd7e14', bg: '#fde8d6', url: '{% url "admin:employee_ops_violationfileproxy_add" %}', needsStep3e: true },
+    { label: 'تعديل الراتب',        icon: 'fa-hand-holding-usd',    color: '#6f42c1', bg: '#ede8f5', url: '{% url "admin:employee_ops_salaryadjustmentproxy_add" %}', needsStep3b: true },
+    { label: 'إنهاء الخدمة',        icon: 'fa-user-times',          color: '#dc3545', bg: '#fdd6d6', url: '{% url "admin:employee_ops_terminationfileproxy_add" %}', needsStep3: true },
+  ];
+  var nrOpen = false;
+  var nrCurrentEmp = null;
+  var nrCurrentSalary = 0;
+  var searchTimeout = null;
+  var nrTermUrl = '{% url "admin:employee_ops_terminationfileproxy_add" %}';
+
+  function nrLoadEmployees(q) {
+    var list = document.getElementById('nrEmpList');
+    list.innerHTML = '<div style="text-align:center;padding:18px;color:#adb5bd;font-size:13px;"><i class="fas fa-spinner fa-spin"></i></div>';
+    fetch(SEARCH_URL + '?q=' + encodeURIComponent(q))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.results || data.results.length === 0) {
+          list.innerHTML = '<div style="text-align:center;padding:18px;color:#adb5bd;font-size:13px;">لا توجد نتائج</div>';
+          return;
+        }
+        list.innerHTML = data.results.map(function(e) {
+          var j = JSON.stringify(e);
+          return '<div class="nr-emp-item" onclick=\'nrPickEmp(' + j + ')\'>' +
+            '<div class="nr-emp-avatar">' + (e.name.trim()[0] || '؟') + '</div>' +
+            '<div style="min-width:0;">' +
+              '<div class="nr-emp-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + e.name + '</div>' +
+              '<div class="nr-emp-meta">' + (e.number ? 'رقم: ' + e.number : '') + (e.branch ? ' · ' + e.branch : '') + '</div>' +
+            '</div>' +
+            '<i class="fas fa-chevron-left" style="margin-right:auto;color:#c8d4e8;font-size:11px;"></i>' +
+            '</div>';
+        }).join('');
+      })
+      .catch(function() {
+        list.innerHTML = '<div style="text-align:center;padding:18px;color:#dc3545;font-size:13px;">حدث خطأ</div>';
+      });
+  }
+
+  window.nrPickEmp = function(emp) {
+    nrCurrentEmp = emp;
+    document.getElementById('nrSelName').textContent = emp.name;
+    document.getElementById('nrSelNum').textContent = emp.number ? 'رقم: ' + emp.number : '';
+    var params = '?employee_name=' + encodeURIComponent(emp.name) + '&employee_number=' + encodeURIComponent(emp.number || '');
+    document.getElementById('nrOpsList').innerHTML = OPS.map(function(op) {
+      if (op.needsStep3) {
+        return '<a href="#" class="nr-op-item" onclick="nrGoStep3();return false;">' +
+          '<div class="nr-op-icon" style="background:' + op.bg + ';color:' + op.color + ';">' +
+            '<i class="fas ' + op.icon + '"></i>' +
+          '</div>' + op.label + '</a>';
+      }
+      if (op.needsStep3b) {
+        return '<a href="#" class="nr-op-item" onclick="nrGoStep3b();return false;">' +
+          '<div class="nr-op-icon" style="background:' + op.bg + ';color:' + op.color + ';">' +
+            '<i class="fas ' + op.icon + '"></i>' +
+          '</div>' + op.label + '</a>';
+      }
+      if (op.needsStep3c) {
+        return '<a href="#" class="nr-op-item" onclick="nrGoStep3c();return false;">' +
+          '<div class="nr-op-icon" style="background:' + op.bg + ';color:' + op.color + ';">' +
+            '<i class="fas ' + op.icon + '"></i>' +
+          '</div>' + op.label + '</a>';
+      }
+      if (op.needsStep3d) {
+        return '<a href="#" class="nr-op-item" onclick="nrGoStep3d();return false;">' +
+          '<div class="nr-op-icon" style="background:' + op.bg + ';color:' + op.color + ';">' +
+            '<i class="fas ' + op.icon + '"></i>' +
+          '</div>' + op.label + '</a>';
+      }
+      if (op.needsStep3e) {
+        return '<a href="#" class="nr-op-item" onclick="nrGoStep3e();return false;">' +
+          '<div class="nr-op-icon" style="background:' + op.bg + ';color:' + op.color + ';">' +
+            '<i class="fas ' + op.icon + '"></i>' +
+          '</div>' + op.label + '</a>';
+      }
+      if (op.needsStep3f) {
+        return '<a href="#" class="nr-op-item" onclick="nrGoStep3f();return false;">' +
+          '<div class="nr-op-icon" style="background:' + op.bg + ';color:' + op.color + ';">' +
+            '<i class="fas ' + op.icon + '"></i>' +
+          '</div>' + op.label + '</a>';
+      }
+      if (op.needsStep3g) {
+        return '<a href="#" class="nr-op-item" onclick="nrGoStep3g();return false;">' +
+          '<div class="nr-op-icon" style="background:' + op.bg + ';color:' + op.color + ';">' +
+            '<i class="fas ' + op.icon + '"></i>' +
+          '</div>' + op.label + '</a>';
+      }
+      return '<a href="' + op.url + params + '" class="nr-op-item">' +
+        '<div class="nr-op-icon" style="background:' + op.bg + ';color:' + op.color + ';">' +
+          '<i class="fas ' + op.icon + '"></i>' +
+        '</div>' + op.label + '</a>';
+    }).join('');
+    document.getElementById('nrStep1').style.display = 'none';
+    document.getElementById('nrStep2').style.display = '';
+  };
+
+  window.nrGoStep3 = function() {
+    document.getElementById('nrS3EmpName').textContent = nrCurrentEmp ? nrCurrentEmp.name : '';
+    document.getElementById('nrLastWorkDate').value = '';
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep3').style.display = '';
+    document.getElementById('nrLastWorkDate').focus();
+  };
+
+  window.nrGoStep2 = function() {
+    document.getElementById('nrStep3').style.display = 'none';
+    document.getElementById('nrStep3b').style.display = 'none';
+    document.getElementById('nrStep3c').style.display = 'none';
+    document.getElementById('nrStep3d').style.display = 'none';
+    document.getElementById('nrStep3e').style.display = 'none';
+    document.getElementById('nrStep3f').style.display = 'none';
+    document.getElementById('nrStep3g').style.display = 'none';
+    document.getElementById('nrStep2').style.display = '';
+  };
+
+  window.nrGoStep3b = function() {
+    document.getElementById('nrS3bEmpName').textContent = nrCurrentEmp ? nrCurrentEmp.name : '';
+    document.getElementById('nrSalaryIncrease').value = '';
+    document.getElementById('nrNewSalaryPreview').style.display = 'none';
+    document.getElementById('nrCurrentSalaryRow').style.display = 'none';
+    document.getElementById('nrSalaryIncrease').style.borderColor = '#e8ecf4';
+    nrCurrentSalary = 0;
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep3b').style.display = '';
+    document.getElementById('nrSalaryIncrease').focus();
+  };
+
+  window.nrGoStep3c = function() {
+    document.getElementById('nrS3cEmpName').textContent = nrCurrentEmp ? nrCurrentEmp.name : '';
+    document.getElementById('nrAdvanceAmount').value = '';
+    document.getElementById('nrAdvanceInstallments').value = '1';
+    document.getElementById('nrInstallmentPreview').style.display = 'none';
+    document.getElementById('nrAdvanceAmount').style.borderColor = '#e8ecf4';
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep3c').style.display = '';
+    document.getElementById('nrAdvanceAmount').focus();
+  };
+
+  window.nrGoStep3d = function() {
+    document.getElementById('nrS3dEmpName').textContent = nrCurrentEmp ? nrCurrentEmp.name : '';
+    document.getElementById('nrVacationStart').value = '';
+    document.getElementById('nrVacationDays').value = '';
+    document.getElementById('nrVacationNotes').value = '';
+    document.getElementById('nrVacationBalance').textContent = 'جارٍ الحساب...';
+    document.getElementById('nrVacationBalanceRow').style.display = 'block';
+    document.getElementById('nrVacationStart').style.borderColor = '#e8ecf4';
+    document.getElementById('nrVacationDays').style.borderColor = '#e8ecf4';
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep3d').style.display = '';
+    document.getElementById('nrVacationStart').focus();
+    // جلب رصيد الإجازات من السيرفر
+    nrFetchVacationBalance();
+  };
+
+  window.nrGoStep3e = function() {
+    document.getElementById('nrS3eEmpName').textContent = nrCurrentEmp ? nrCurrentEmp.name : '';
+    document.getElementById('nrViolationType').value = '';
+    document.getElementById('nrViolationDate').value = '';
+    document.getElementById('nrViolationNotes').value = '';
+    document.getElementById('nrViolationFile').value = '';
+    document.getElementById('nrViolationFileLabel').innerHTML = 
+      '<i class="fas fa-cloud-upload-alt" style="font-size:20px; color:#adb5bd; margin-bottom:6px; display:block;"></i>' +
+      '<span style="font-size:13px; color:#6c757d;">اضغط لاختيار ملف أو اسحب وأفلت</span>';
+    document.getElementById('nrViolationType').style.borderColor = '#e8ecf4';
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep3e').style.display = '';
+    document.getElementById('nrViolationType').focus();
+  };
+
+  window.nrGoStep3f = function() {
+    document.getElementById('nrS3fEmpName').textContent = nrCurrentEmp ? nrCurrentEmp.name : '';
+    document.getElementById('nrMedicalDate').value = '';
+    document.getElementById('nrMedicalDuration').value = '1';
+    document.getElementById('nrMedicalReason').value = '';
+    document.getElementById('nrMedicalFile').value = '';
+    document.getElementById('nrMedicalFileLabel').innerHTML = 
+      '<i class="fas fa-cloud-upload-alt" style="font-size:20px; color:#adb5bd; margin-bottom:6px; display:block;"></i>' +
+      '<span style="font-size:13px; color:#6c757d;">اضغط لاختيار ملف أو اسحب وأفلت</span>';
+    document.getElementById('nrMedicalDate').style.borderColor = '#e8ecf4';
+    document.getElementById('nrMedicalReason').style.borderColor = '#e8ecf4';
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep3f').style.display = '';
+    document.getElementById('nrMedicalDate').focus();
+  };
+
+  window.nrGoStep3g = function() {
+    document.getElementById('nrS3gEmpName').textContent = nrCurrentEmp ? nrCurrentEmp.name : '';
+    document.getElementById('nrNewBranch').value = '';
+    document.getElementById('nrNewDepartment').value = '';
+    document.getElementById('nrTransferDate').value = '';
+    document.getElementById('nrTransferReason').value = '';
+    document.getElementById('nrCurrentBranchDisplay').textContent = nrCurrentEmp && nrCurrentEmp.branch ? nrCurrentEmp.branch : '—';
+    document.getElementById('nrCurrentDeptDisplay').textContent = nrCurrentEmp && nrCurrentEmp.department ? nrCurrentEmp.department : '—';
+    document.getElementById('nrNewBranch').style.borderColor = '#e8ecf4';
+    document.getElementById('nrNewDepartment').style.borderColor = '#e8ecf4';
+    document.getElementById('nrTransferReason').style.borderColor = '#e8ecf4';
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep3g').style.display = '';
+    // جلب قائمة الفروع والأقسام
+    nrFetchBranchesAndDepartments();
+    document.getElementById('nrNewBranch').focus();
+  };
+
+  window.nrFetchBranchesAndDepartments = function() {
+    // جلب الفروع
+    fetch('/get-branches-departments/')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        // ملء قائمة الفروع
+        var branchSelect = document.getElementById('nrNewBranch');
+        branchSelect.innerHTML = '<option value="">-- اختر الفرع الجديد --</option>';
+        if (data.branches) {
+          data.branches.forEach(function(b) {
+            var opt = document.createElement('option');
+            opt.value = b;
+            opt.textContent = b;
+            branchSelect.appendChild(opt);
+          });
+        }
+        // ملء قائمة الأقسام
+        var deptSelect = document.getElementById('nrNewDepartment');
+        deptSelect.innerHTML = '<option value="">-- اختر القسم الجديد --</option>';
+        if (data.departments) {
+          data.departments.forEach(function(d) {
+            var opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = d;
+            deptSelect.appendChild(opt);
+          });
+        }
+      })
+      .catch(function() {
+        console.error('خطأ في جلب الفروع والأقسام');
+      });
+  };
+
+  // حدث تغيير الملف لعرض اسم الملف المختار
+  document.addEventListener('DOMContentLoaded', function() {
+    // ملف المخالفة
+    var fileInput = document.getElementById('nrViolationFile');
+    if (fileInput) {
+      fileInput.addEventListener('change', function() {
+        var label = document.getElementById('nrViolationFileLabel');
+        if (this.files && this.files[0]) {
+          label.innerHTML = 
+            '<i class="fas fa-file" style="font-size:20px; color:#fd7e14; margin-bottom:6px; display:block;"></i>' +
+            '<span style="font-size:13px; color:#1a1d2e; font-weight:600;">' + this.files[0].name + '</span>';
+        } else {
+          label.innerHTML = 
+            '<i class="fas fa-cloud-upload-alt" style="font-size:20px; color:#adb5bd; margin-bottom:6px; display:block;"></i>' +
+            '<span style="font-size:13px; color:#6c757d;">اضغط لاختيار ملف أو اسحب وأفلت</span>';
+        }
+      });
+    }
+    // ملف العذر الطبي
+    var medicalFileInput = document.getElementById('nrMedicalFile');
+    if (medicalFileInput) {
+      medicalFileInput.addEventListener('change', function() {
+        var label = document.getElementById('nrMedicalFileLabel');
+        if (this.files && this.files[0]) {
+          label.innerHTML = 
+            '<i class="fas fa-file" style="font-size:20px; color:#e83e8c; margin-bottom:6px; display:block;"></i>' +
+            '<span style="font-size:13px; color:#1a1d2e; font-weight:600;">' + this.files[0].name + '</span>';
+        } else {
+          label.innerHTML = 
+            '<i class="fas fa-cloud-upload-alt" style="font-size:20px; color:#adb5bd; margin-bottom:6px; display:block;"></i>' +
+            '<span style="font-size:13px; color:#6c757d;">اضغط لاختيار ملف أو اسحب وأفلت</span>';
+        }
+      });
+    }
+  });
+
+  var nrCurrentVacationBalance = 0;
+
+  window.nrFetchVacationBalance = function() {
+    var emp = nrCurrentEmp;
+    if (!emp) return;
+    var csrfToken = document.getElementById('nrCsrfToken').value;
+    fetch('/get-vacation-balance/?employee_name=' + encodeURIComponent(emp.name) + '&employee_number=' + encodeURIComponent(emp.number || ''))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.balance !== undefined) {
+          var balance = parseFloat(data.balance);
+          var maxDays = Math.floor(balance); // أيام كاملة متاحة
+          var balanceDisplay = balance % 1 === 0 ? balance : balance.toFixed(2);
+          nrCurrentVacationBalance = maxDays;
+          document.getElementById('nrVacationBalance').textContent = balanceDisplay + ' يوم';
+          // تحديد الحد الأقصى لعدد الأيام = أيام كاملة فقط
+          var daysInput = document.getElementById('nrVacationDays');
+          daysInput.max = maxDays;
+          daysInput.value = maxDays > 0 ? maxDays : '';
+          daysInput.placeholder = maxDays > 0 ? maxDays : '0';
+        } else {
+          nrCurrentVacationBalance = 0;
+          document.getElementById('nrVacationBalance').textContent = 'غير متوفر';
+          document.getElementById('nrVacationDays').max = 0;
+          document.getElementById('nrVacationDays').value = '';
+        }
+      })
+      .catch(function() {
+        nrCurrentVacationBalance = 0;
+        document.getElementById('nrVacationBalance').textContent = 'غير متوفر';
+        document.getElementById('nrVacationDays').max = 0;
+      });
+  };
+
+  // منع إدخال أكثر من الرصيد المتاح
+  window.nrValidateVacationDays = function() {
+    var daysInput = document.getElementById('nrVacationDays');
+    var days = parseInt(daysInput.value) || 0;
+    var maxDays = Math.floor(nrCurrentVacationBalance); // أقصى أيام كاملة
+    if (days > maxDays && maxDays > 0) {
+      daysInput.value = maxDays;
+    }
+    if (days < 1 && daysInput.value !== '') {
+      daysInput.value = 1;
+    }
+  };
+
+  window.nrUpdateInstallment = function() {
+    var amount = parseFloat(document.getElementById('nrAdvanceAmount').value) || 0;
+    var inst = parseInt(document.getElementById('nrAdvanceInstallments').value) || 1;
+    var preview = document.getElementById('nrInstallmentPreview');
+    var instVal = document.getElementById('nrInstallmentVal');
+    if (amount > 0 && inst > 0) {
+      preview.style.display = 'block';
+      instVal.textContent = (amount / inst).toFixed(2);
+    } else {
+      preview.style.display = 'none';
+    }
+  };
+
+  window.nrUpdateNewSalary = function() {
+    var inc = parseFloat(document.getElementById('nrSalaryIncrease').value) || 0;
+    var preview = document.getElementById('nrNewSalaryPreview');
+    var newSalVal = document.getElementById('nrNewSalaryVal');
+    if (inc > 0) {
+      preview.style.display = 'block';
+      if (nrCurrentSalary > 0) {
+        newSalVal.textContent = (nrCurrentSalary + inc).toFixed(2);
+      } else {
+        newSalVal.textContent = 'الراتب الحالي + ' + inc.toFixed(2);
+      }
+    } else {
+      preview.style.display = 'none';
+    }
+  };
+
+  window.nrSubmitSalaryAdj = function() {
+    var inc = parseFloat(document.getElementById('nrSalaryIncrease').value);
+    if (!inc || inc <= 0) {
+      document.getElementById('nrSalaryIncrease').style.borderColor = '#dc3545';
+      document.getElementById('nrSalaryIncrease').focus();
+      return;
+    }
+    var emp = nrCurrentEmp;
+    var btn = document.getElementById('nrSalaryBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جارٍ الحفظ...';
+    var csrfToken = document.getElementById('nrCsrfToken').value;
+    fetch('/quick-salary-adjustment/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({
+        employee_name: emp.name,
+        employee_number: emp.number || '',
+        salary_increase: inc,
+      }),
+    })
+    .then(function(r) {
+      return r.text().then(function(text) {
+        try { return JSON.parse(text); }
+        catch(e) { return { error: 'خطأ في الخادم (حالة ' + r.status + '): ' + text.substring(0, 120) }; }
+      });
+    })
+    .then(function(data) {
+      if (data.success) {
+        var dispSalary = data.new_salary ? parseFloat(data.new_salary).toFixed(2) + ' ريال' : '';
+        var msg = 'تعديل راتب ' + emp.name + (dispSalary ? ' — الراتب الجديد: ' + dispSalary : '');
+        document.getElementById('nrStep3b').innerHTML =
+          '<div style="padding:28px 20px; text-align:center;">' +
+            '<div style="width:56px;height:56px;border-radius:50%;background:#ede8f5;color:#6f42c1;font-size:26px;' +
+              'display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">' +
+              '<i class="fas fa-check"></i></div>' +
+            '<div style="font-weight:800;font-size:16px;color:#1a1d2e;margin-bottom:6px;">تم حفظ التعديل بنجاح</div>' +
+            '<div style="font-size:13px;color:#6c757d;margin-bottom:18px;">' + msg + '</div>' +
+            '<a href="' + data.view_url + '" style="display:inline-block;background:linear-gradient(135deg,#6f42c1,#563399);color:#fff;' +
+              'border-radius:10px;padding:10px 22px;font-weight:700;font-size:14px;text-decoration:none;">' +
+              '<i class="fas fa-external-link-alt me-1"></i> عرض الطلب</a>' +
+          '</div>';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ التعديل';
+        alert(data.error || 'حدث خطأ أثناء الحفظ');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ التعديل';
+      alert('حدث خطأ في الاتصال، حاول مجدداً');
+    });
+  };
+
+  window.nrSubmitAdvance = function() {
+    var amount = parseFloat(document.getElementById('nrAdvanceAmount').value);
+    var inst = parseInt(document.getElementById('nrAdvanceInstallments').value) || 1;
+    if (!amount || amount <= 0) {
+      document.getElementById('nrAdvanceAmount').style.borderColor = '#dc3545';
+      document.getElementById('nrAdvanceAmount').focus();
+      return;
+    }
+    var emp = nrCurrentEmp;
+    var btn = document.getElementById('nrAdvanceBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جارٍ الحفظ...';
+    var csrfToken = document.getElementById('nrCsrfToken').value;
+    fetch('/quick-advance/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({
+        employee_name: emp.name,
+        employee_number: emp.number || '',
+        advance_amount: amount,
+        installments: inst,
+      }),
+    })
+    .then(function(r) {
+      return r.text().then(function(text) {
+        try { return JSON.parse(text); }
+        catch(e) { return { error: 'خطأ في الخادم (حالة ' + r.status + '): ' + text.substring(0, 120) }; }
+      });
+    })
+    .then(function(data) {
+      if (data.success) {
+        var instText = data.installments > 1 ? ' على ' + data.installments + ' أقساط' : '';
+        var msg = 'سلفة ' + parseFloat(data.advance_amount).toFixed(2) + ' ريال' + instText;
+        document.getElementById('nrStep3c').innerHTML =
+          '<div style="padding:28px 20px; text-align:center;">' +
+            '<div style="width:56px;height:56px;border-radius:50%;background:#d6f0de;color:#28a745;font-size:26px;' +
+              'display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">' +
+              '<i class="fas fa-check"></i></div>' +
+            '<div style="font-weight:800;font-size:16px;color:#1a1d2e;margin-bottom:6px;">تم حفظ الطلب بنجاح</div>' +
+            '<div style="font-size:13px;color:#6c757d;margin-bottom:18px;">' + msg + '</div>' +
+            '<a href="' + data.view_url + '" style="display:inline-block;background:linear-gradient(135deg,#28a745,#1e7e34);color:#fff;' +
+              'border-radius:10px;padding:10px 22px;font-weight:700;font-size:14px;text-decoration:none;">' +
+              '<i class="fas fa-external-link-alt me-1"></i> عرض الطلب</a>' +
+          '</div>';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ الطلب';
+        alert(data.error || 'حدث خطأ أثناء الحفظ');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ الطلب';
+      alert('حدث خطأ في الاتصال، حاول مجدداً');
+    });
+  };
+
+  window.nrSubmitVacation = function() {
+    var startDate = document.getElementById('nrVacationStart').value;
+    var days = parseInt(document.getElementById('nrVacationDays').value);
+    var notes = document.getElementById('nrVacationNotes').value;
+    
+    if (!startDate) {
+      document.getElementById('nrVacationStart').style.borderColor = '#dc3545';
+      document.getElementById('nrVacationStart').focus();
+      return;
+    }
+    if (!days || days < 1) {
+      document.getElementById('nrVacationDays').style.borderColor = '#dc3545';
+      document.getElementById('nrVacationDays').focus();
+      return;
+    }
+    
+    var emp = nrCurrentEmp;
+    var btn = document.getElementById('nrVacationBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جارٍ الحفظ...';
+    var csrfToken = document.getElementById('nrCsrfToken').value;
+    
+    fetch('/quick-vacation/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({
+        employee_name: emp.name,
+        employee_number: emp.number || '',
+        vacation_start: startDate,
+        vacation_days: days,
+        notes: notes,
+      }),
+    })
+    .then(function(r) {
+      return r.text().then(function(text) {
+        try { return JSON.parse(text); }
+        catch(e) { return { error: 'خطأ في الخادم (حالة ' + r.status + '): ' + text.substring(0, 120) }; }
+      });
+    })
+    .then(function(data) {
+      if (data.success) {
+        var msg = 'إجازة ' + data.vacation_days + ' يوم — الرصيد المتبقي: ' + parseFloat(data.vacation_balance).toFixed(1) + ' يوم';
+        document.getElementById('nrStep3d').innerHTML =
+          '<div style="padding:28px 20px; text-align:center;">' +
+            '<div style="width:56px;height:56px;border-radius:50%;background:#fff3d6;color:#f5a623;font-size:26px;' +
+              'display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">' +
+              '<i class="fas fa-check"></i></div>' +
+            '<div style="font-weight:800;font-size:16px;color:#1a1d2e;margin-bottom:6px;">تم حفظ الطلب بنجاح</div>' +
+            '<div style="font-size:13px;color:#6c757d;margin-bottom:18px;">' + msg + '</div>' +
+            '<a href="' + data.view_url + '" style="display:inline-block;background:linear-gradient(135deg,#f5a623,#d48c1a);color:#fff;' +
+              'border-radius:10px;padding:10px 22px;font-weight:700;font-size:14px;text-decoration:none;">' +
+              '<i class="fas fa-external-link-alt me-1"></i> عرض الطلب</a>' +
+          '</div>';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ الطلب';
+        alert(data.error || 'حدث خطأ أثناء الحفظ');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ الطلب';
+      alert('حدث خطأ في الاتصال، حاول مجدداً');
+    });
+  };
+
+  window.nrSubmitViolation = function() {
+    var violationType = document.getElementById('nrViolationType').value;
+    var violationDate = document.getElementById('nrViolationDate').value;
+    var violationNotes = document.getElementById('nrViolationNotes').value;
+    var fileInput = document.getElementById('nrViolationFile');
+    
+    if (!violationType) {
+      document.getElementById('nrViolationType').style.borderColor = '#dc3545';
+      document.getElementById('nrViolationType').focus();
+      return;
+    }
+    
+    var emp = nrCurrentEmp;
+    var btn = document.getElementById('nrViolationBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جارٍ الحفظ...';
+    var csrfToken = document.getElementById('nrCsrfToken').value;
+    
+    // استخدام FormData لدعم رفع الملفات
+    var formData = new FormData();
+    formData.append('employee_name', emp.name);
+    formData.append('employee_number', emp.number || '');
+    formData.append('violation_type', violationType);
+    formData.append('violation_date', violationDate);
+    formData.append('violation_notes', violationNotes);
+    if (fileInput.files && fileInput.files[0]) {
+      formData.append('file', fileInput.files[0]);
+    }
+    
+    fetch('/quick-violation/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken },
+      body: formData,
+    })
+    .then(function(r) {
+      return r.text().then(function(text) {
+        try { return JSON.parse(text); }
+        catch(e) { return { error: 'خطأ في الخادم (حالة ' + r.status + '): ' + text.substring(0, 120) }; }
+      });
+    })
+    .then(function(data) {
+      if (data.success) {
+        document.getElementById('nrStep3e').innerHTML =
+          '<div style="padding:28px 20px; text-align:center;">' +
+            '<div style="width:56px;height:56px;border-radius:50%;background:#fde8d6;color:#fd7e14;font-size:26px;' +
+              'display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">' +
+              '<i class="fas fa-check"></i></div>' +
+            '<div style="font-weight:800;font-size:16px;color:#1a1d2e;margin-bottom:6px;">تم حفظ المخالفة بنجاح</div>' +
+            '<div style="font-size:13px;color:#6c757d;margin-bottom:18px;">مخالفة: ' + violationType + ' — ' + emp.name + '</div>' +
+            '<a href="' + data.view_url + '" style="display:inline-block;background:linear-gradient(135deg,#fd7e14,#dc6a0f);color:#fff;' +
+              'border-radius:10px;padding:10px 22px;font-weight:700;font-size:14px;text-decoration:none;">' +
+              '<i class="fas fa-external-link-alt me-1"></i> عرض المخالفة</a>' +
+          '</div>';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ المخالفة';
+        alert(data.error || 'حدث خطأ أثناء الحفظ');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ المخالفة';
+      alert('حدث خطأ في الاتصال، حاول مجدداً');
+    });
+  };
+
+  window.nrSubmitMedicalExcuse = function() {
+    var excuseDate = document.getElementById('nrMedicalDate').value;
+    var excuseDuration = parseInt(document.getElementById('nrMedicalDuration').value) || 1;
+    var excuseReason = document.getElementById('nrMedicalReason').value;
+    var fileInput = document.getElementById('nrMedicalFile');
+    
+    if (!excuseDate) {
+      document.getElementById('nrMedicalDate').style.borderColor = '#dc3545';
+      document.getElementById('nrMedicalDate').focus();
+      return;
+    }
+    if (!excuseReason) {
+      document.getElementById('nrMedicalReason').style.borderColor = '#dc3545';
+      document.getElementById('nrMedicalReason').focus();
+      return;
+    }
+    
+    var emp = nrCurrentEmp;
+    var btn = document.getElementById('nrMedicalBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جارٍ الحفظ...';
+    var csrfToken = document.getElementById('nrCsrfToken').value;
+    
+    // استخدام FormData لدعم رفع الملفات
+    var formData = new FormData();
+    formData.append('employee_name', emp.name);
+    formData.append('employee_number', emp.number || '');
+    formData.append('employee_branch', emp.branch || '');
+    formData.append('excuse_date', excuseDate);
+    formData.append('excuse_duration', excuseDuration);
+    formData.append('excuse_reason', excuseReason);
+    if (fileInput.files && fileInput.files[0]) {
+      formData.append('file', fileInput.files[0]);
+    }
+    
+    fetch('/quick-medical-excuse/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken },
+      body: formData,
+    })
+    .then(function(r) {
+      return r.text().then(function(text) {
+        try { return JSON.parse(text); }
+        catch(e) { return { error: 'خطأ في الخادم (حالة ' + r.status + '): ' + text.substring(0, 120) }; }
+      });
+    })
+    .then(function(data) {
+      if (data.success) {
+        document.getElementById('nrStep3f').innerHTML =
+          '<div style="padding:28px 20px; text-align:center;">' +
+            '<div style="width:56px;height:56px;border-radius:50%;background:#fad6eb;color:#e83e8c;font-size:26px;' +
+              'display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">' +
+              '<i class="fas fa-check"></i></div>' +
+            '<div style="font-weight:800;font-size:16px;color:#1a1d2e;margin-bottom:6px;">تم حفظ العذر الطبي بنجاح</div>' +
+            '<div style="font-size:13px;color:#6c757d;margin-bottom:18px;">عذر طبي ' + excuseDuration + ' يوم — ' + emp.name + '</div>' +
+            '<a href="' + data.view_url + '" style="display:inline-block;background:linear-gradient(135deg,#e83e8c,#c21c5c);color:#fff;' +
+              'border-radius:10px;padding:10px 22px;font-weight:700;font-size:14px;text-decoration:none;">' +
+              '<i class="fas fa-external-link-alt me-1"></i> عرض العذر</a>' +
+          '</div>';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ العذر';
+        alert(data.error || 'حدث خطأ أثناء الحفظ');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ العذر';
+      alert('حدث خطأ في الاتصال، حاول مجدداً');
+    });
+  };
+
+  window.nrSubmitTransfer = function() {
+    var newBranch = document.getElementById('nrNewBranch').value;
+    var newDepartment = document.getElementById('nrNewDepartment').value;
+    var transferDate = document.getElementById('nrTransferDate').value;
+    var transferReason = document.getElementById('nrTransferReason').value;
+    
+    if (!newBranch) {
+      document.getElementById('nrNewBranch').style.borderColor = '#dc3545';
+      document.getElementById('nrNewBranch').focus();
+      return;
+    }
+    if (!transferReason) {
+      document.getElementById('nrTransferReason').style.borderColor = '#dc3545';
+      document.getElementById('nrTransferReason').focus();
+      return;
+    }
+    
+    var emp = nrCurrentEmp;
+    var btn = document.getElementById('nrTransferBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جارٍ الحفظ...';
+    var csrfToken = document.getElementById('nrCsrfToken').value;
+    
+    fetch('/quick-transfer/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({
+        employee_name: emp.name,
+        employee_number: emp.number || '',
+        current_branch: emp.branch || '',
+        current_department: emp.department || '',
+        new_branch: newBranch,
+        new_department: newDepartment,
+        transfer_date: transferDate,
+        transfer_reason: transferReason,
+      }),
+    })
+    .then(function(r) {
+      return r.text().then(function(text) {
+        try { return JSON.parse(text); }
+        catch(e) { return { error: 'خطأ في الخادم (حالة ' + r.status + '): ' + text.substring(0, 120) }; }
+      });
+    })
+    .then(function(data) {
+      if (data.success) {
+        document.getElementById('nrStep3g').innerHTML =
+          '<div style="padding:28px 20px; text-align:center;">' +
+            '<div style="width:56px;height:56px;border-radius:50%;background:#d6eef5;color:#17a2b8;font-size:26px;' +
+              'display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">' +
+              '<i class="fas fa-check"></i></div>' +
+            '<div style="font-weight:800;font-size:16px;color:#1a1d2e;margin-bottom:6px;">تم حفظ طلب النقل بنجاح</div>' +
+            '<div style="font-size:13px;color:#6c757d;margin-bottom:18px;">نقل ' + emp.name + ' إلى ' + newBranch + '</div>' +
+            '<a href="' + data.view_url + '" style="display:inline-block;background:linear-gradient(135deg,#17a2b8,#117a8b);color:#fff;' +
+              'border-radius:10px;padding:10px 22px;font-weight:700;font-size:14px;text-decoration:none;">' +
+              '<i class="fas fa-external-link-alt me-1"></i> عرض الطلب</a>' +
+          '</div>';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ طلب النقل';
+        alert(data.error || 'حدث خطأ أثناء الحفظ');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save me-1"></i> حفظ طلب النقل';
+      alert('حدث خطأ في الاتصال، حاول مجدداً');
+    });
+  };
+
+  window.nrSubmitTermination = function() {
+    var lastDate = document.getElementById('nrLastWorkDate').value;
+    if (!lastDate) {
+      document.getElementById('nrLastWorkDate').style.borderColor = '#dc3545';
+      document.getElementById('nrLastWorkDate').focus();
+      return;
+    }
+    var emp = nrCurrentEmp;
+    var btn = document.getElementById('nrTermBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جارٍ الحفظ...';
+
+    var csrfToken = document.getElementById('nrCsrfToken').value;
+
+    fetch('/quick-termination/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify({
+        employee_name: emp.name,
+        employee_number: emp.number || '',
+        last_working_date: lastDate,
+      }),
+    })
+    .then(function(r) {
+      return r.text().then(function(text) {
+        try { return JSON.parse(text); }
+        catch(e) { return { error: 'خطأ في الخادم (حالة ' + r.status + '): ' + text.substring(0, 120) }; }
+      });
+    })
+    .then(function(data) {
+      if (data.success) {
+        document.getElementById('nrStep3').innerHTML =
+          '<div style="padding:28px 20px; text-align:center;">' +
+            '<div style="width:56px;height:56px;border-radius:50%;background:#e5f5ef;color:#28a745;font-size:26px;' +
+              'display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">' +
+              '<i class="fas fa-check"></i></div>' +
+            '<div style="font-weight:800;font-size:16px;color:#1a1d2e;margin-bottom:6px;">تم حفظ الطلب بنجاح</div>' +
+            '<div style="font-size:13px;color:#6c757d;margin-bottom:18px;">طلب إنهاء خدمة ' + emp.name + '</div>' +
+            '<a href="' + data.view_url + '" style="display:inline-block;background:linear-gradient(135deg,#4f80e1,#3b66b8);color:#fff;' +
+              'border-radius:10px;padding:10px 22px;font-weight:700;font-size:14px;text-decoration:none;">' +
+              '<i class="fas fa-external-link-alt me-1"></i> عرض الطلب</a>' +
+          '</div>';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-arrow-left me-1"></i> حفظ الطلب';
+        alert(data.error || 'حدث خطأ أثناء الحفظ');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-arrow-left me-1"></i> حفظ الطلب';
+      alert('حدث خطأ في الاتصال، حاول مجدداً');
+    });
+  };
+
+  window.nrGoBack = function() {
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep1').style.display = '';
+  };
+
+  function nrOpenDropdown() {
+    var dd = document.getElementById('nrDropdown');
+    dd.style.display = 'block';
+    document.getElementById('nrStep1').style.display = '';
+    document.getElementById('nrStep2').style.display = 'none';
+    document.getElementById('nrStep3').style.display = 'none';
+    document.getElementById('nrStep3b').style.display = 'none';
+    document.getElementById('nrEmpSearch').value = '';
+    document.getElementById('nrEmpList').innerHTML = '';
+    document.getElementById('nrEmpSearch').focus();
+    nrOpen = true;
+  }
+  function nrCloseDropdown() {
+    document.getElementById('nrDropdown').style.display = 'none';
+    nrOpen = false;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('nrToggleBtn');
+    var dd = document.getElementById('nrDropdown');
+    var search = document.getElementById('nrEmpSearch');
+
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (nrOpen) { nrCloseDropdown(); } else { nrOpenDropdown(); }
+    });
+
+    search.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      var val = this.value.trim();
+      if (!val) {
+        document.getElementById('nrEmpList').innerHTML = '';
+        return;
+      }
+      searchTimeout = setTimeout(function() { nrLoadEmployees(val); }, 280);
+    });
+
+    document.addEventListener('click', function(e) {
+      if (nrOpen && !dd.contains(e.target) && e.target !== btn) { nrCloseDropdown(); }
+    });
+  });
+})();
+</script>
+
+{% endblock %}

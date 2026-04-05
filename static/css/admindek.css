@@ -1,0 +1,1806 @@
+/* ============================================================
+   AdminDek – HR Pro  |  RTL Admin Theme
+   Bootstrap 5 RTL base, position:fixed sidebar on the RIGHT
+   ============================================================ */
+
+/* ── CSS Variables ─────────────────────────────────────────── */
+:root {
+    --primary:       #4361ee;
+    --primary-dark:  #3a56d4;
+    --primary-light: #eef0ff;
+    --success:       #06d6a0;
+    --warning:       #ffd166;
+    --danger:        #ef476f;
+    --info:          #118ab2;
+
+    --sidebar-bg:    #ffffff;
+    --sidebar-mini-w: 64px;
+    --sidebar-w:     260px;
+    --topbar-h:      60px;
+    --content-bg:    #f0f3f9;
+
+    --card-bg:       #ffffff;
+    --card-radius:   12px;
+    --card-shadow:   0 2px 12px rgba(0,0,0,.07);
+
+    --text:          #2d3142;
+    --text-muted:    #6c7a9c;
+    --border:        #e2e8f0;
+
+    --font:          'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+    --ease:          cubic-bezier(.4,0,.2,1);
+}
+
+/* ── 1. Base ────────────────────────────────────────────────── */
+html, body {
+    font-family: var(--font);
+    background: var(--content-bg);
+    color: var(--text);
+    direction: rtl;
+    text-align: right;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-dark); }
+
+h1, h2, h3, h4, h5, h6 { font-weight: 600; }
+
+/* ── 2. SIDEBAR ─────────────────────────────────────────────── */
+/*
+   KEY DESIGN DECISION:
+   position:fixed + right:0  →  sidebar always on the RIGHT.
+   No CSS Grid manipulation, no direction hacks, no !important fights.
+   Main content simply has margin-right: var(--sidebar-w) to make room.
+*/
+.admindek-sidebar {
+    position: fixed;
+    top: var(--topbar-h);
+    right: 0;
+    width: var(--sidebar-mini-w);
+    height: calc(100vh - var(--topbar-h));
+    background: var(--sidebar-bg);
+    z-index: 1040;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: width .3s var(--ease), transform .28s var(--ease), box-shadow .3s var(--ease);
+}
+
+/* Scrollbar in sidebar – light theme */
+.admindek-sidebar::-webkit-scrollbar { width: 4px; }
+.admindek-sidebar::-webkit-scrollbar-track { background: transparent; }
+.admindek-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Hover expand – sidebar opens to full width on mouse-over */
+.admindek-sidebar:hover,
+body.sidebar-pinned .admindek-sidebar {
+    width: var(--sidebar-w);
+    box-shadow: -6px 0 24px rgba(0,0,0,.18);
+}
+
+/* Sidebar is now connected below the topbar – border separates it from content */
+.admindek-sidebar {
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    box-shadow: -2px 0 10px rgba(0,0,0,.05);
+}
+
+/* ── 2a. Sidebar Brand – hidden (sidebar now starts below topbar) ─ */
+.sidebar-brand {
+    display: none;
+}
+.brand-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -.3px;
+    padding: 4px 0 10px;
+}
+.brand-link:hover { color: #fff; }
+.brand-icon { font-size: 1.4rem; color: var(--primary); }
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 8px;
+}
+.sidebar-user-avatar { color: rgba(255,255,255,.55); line-height: 1; }
+.sidebar-user-name {
+    font-size: .8rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sidebar-user-role {
+    font-size: .7rem;
+    color: rgba(255,255,255,.45);
+}
+
+/* ── 2b. Sidebar Navigation ─────────────────────────────────── */
+.sidebar-nav {
+    flex: 1;
+    padding: 10px 8px;
+    overflow-y: auto;
+}
+
+.sidebar-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: .86rem;
+    font-weight: 500;
+    transition: background .18s var(--ease), color .18s var(--ease);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    margin-bottom: 2px;
+}
+.sidebar-nav-link:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+.sidebar-nav-link.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(67,97,238,.4);
+}
+
+/* Child links (under an app section) */
+.sidebar-nav-child {
+    padding-right: 28px;
+    font-size: .82rem;
+    color: var(--text-muted);
+}
+.sidebar-nav-child:hover { color: var(--primary); }
+.sidebar-nav-child.active { background: var(--primary); color: #fff; }
+
+/* Nav section header */
+.nav-section { margin-bottom: 2px; }
+.nav-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    cursor: pointer;
+    transition: background .18s var(--ease), color .18s var(--ease);
+    margin-bottom: 2px;
+}
+.nav-section-header:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+.nav-section-header .nav-arrow {
+    margin-right: auto;     /* pushes arrow to far left in RTL */
+    transition: transform .22s var(--ease);
+    font-size: .7rem;
+}
+.nav-section-header[aria-expanded="true"] .nav-arrow {
+    transform: rotate(-90deg);
+}
+
+/* Collapse panel children */
+.nav-section .collapse,
+.nav-section .collapsing {
+    padding-bottom: 4px;
+}
+
+.nav-icon {
+    width: 22px;
+    text-align: center;
+    font-size: 1.15rem;   /* larger icon */
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* ── 2c. Sidebar Footer ─────────────────────────────────────── */
+.sidebar-footer-link {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.sidebar-footer-link a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: .82rem;
+    transition: color .18s;
+}
+.sidebar-footer-link a:hover { color: var(--danger); }
+
+/* ── 2d. Mobile overlay ─────────────────────────────────────── */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: var(--topbar-h);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 1039;
+}
+
+/* ── 2e. Mini sidebar – icon rail & hover expand ────────────── */
+
+/* Brand section compact in mini mode */
+.admindek-sidebar .sidebar-brand {
+    padding: 14px 0 10px;
+    text-align: center;
+    transition: padding .3s var(--ease);
+}
+.admindek-sidebar:hover .sidebar-brand,
+body.sidebar-pinned .admindek-sidebar .sidebar-brand {
+    padding: 16px 16px 12px;
+    text-align: right;
+}
+
+/* Center brand link, user avatar, footer link in mini mode */
+.admindek-sidebar .brand-link,
+.admindek-sidebar .sidebar-user,
+.admindek-sidebar .sidebar-footer-link a { justify-content: center; }
+.admindek-sidebar:hover .brand-link,
+.admindek-sidebar:hover .sidebar-user,
+.admindek-sidebar:hover .sidebar-footer-link a,
+body.sidebar-pinned .admindek-sidebar .brand-link,
+body.sidebar-pinned .admindek-sidebar .sidebar-user,
+body.sidebar-pinned .admindek-sidebar .sidebar-footer-link a { justify-content: flex-start; }
+
+/* Nav inner padding tighter in mini mode */
+.admindek-sidebar .sidebar-nav { padding: 10px 4px; }
+.admindek-sidebar:hover .sidebar-nav,
+body.sidebar-pinned .admindek-sidebar .sidebar-nav { padding: 10px 8px; }
+
+/* Nav links – icon centered */
+.admindek-sidebar .sidebar-nav-link {
+    justify-content: center;
+    padding: 0;
+    height: 48px;         /* fixed row height – uniform alignment */
+    min-height: 48px;
+}
+.admindek-sidebar:hover .sidebar-nav-link,
+body.sidebar-pinned .admindek-sidebar .sidebar-nav-link { justify-content: flex-start; padding: 9px 12px; height: auto; min-height: 0; }
+
+/* Child links – no indent in mini mode */
+.admindek-sidebar .sidebar-nav-child {
+    padding-right: 0;
+    justify-content: center;
+    height: 44px;
+    min-height: 44px;
+}
+.admindek-sidebar:hover .sidebar-nav-child,
+body.sidebar-pinned .admindek-sidebar .sidebar-nav-child { padding-right: 28px; justify-content: flex-start; height: auto; min-height: 0; }
+
+/* Section headers */
+.admindek-sidebar .nav-section-header {
+    justify-content: center;
+    padding: 0;
+    height: 44px;
+    min-height: 44px;
+}
+.admindek-sidebar:hover .nav-section-header,
+body.sidebar-pinned .admindek-sidebar .nav-section-header { justify-content: flex-start; padding: 9px 12px; height: auto; min-height: 0; }
+
+/* Text elements: hidden (max-width:0, opacity:0) in mini mode */
+.admindek-sidebar .brand-text,
+.admindek-sidebar .sidebar-user-info,
+.admindek-sidebar .sidebar-nav-link > span,
+.admindek-sidebar .nav-section-header > span,
+.admindek-sidebar .nav-arrow,
+.admindek-sidebar .sidebar-footer-link a > span {
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    transition: max-width .3s var(--ease), opacity .2s var(--ease);
+}
+
+/* Reveal text on hover / pinned (slight delay lets width open first) */
+.admindek-sidebar:hover .brand-text,
+.admindek-sidebar:hover .sidebar-user-info,
+.admindek-sidebar:hover .sidebar-nav-link > span,
+.admindek-sidebar:hover .nav-section-header > span,
+.admindek-sidebar:hover .nav-arrow,
+.admindek-sidebar:hover .sidebar-footer-link a > span,
+body.sidebar-pinned .admindek-sidebar .brand-text,
+body.sidebar-pinned .admindek-sidebar .sidebar-user-info,
+body.sidebar-pinned .admindek-sidebar .sidebar-nav-link > span,
+body.sidebar-pinned .admindek-sidebar .nav-section-header > span,
+body.sidebar-pinned .admindek-sidebar .nav-arrow,
+body.sidebar-pinned .admindek-sidebar .sidebar-footer-link a > span {
+    max-width: 200px;
+    opacity: 1;
+    transition-delay: .1s;
+}
+
+/* ── 3. MAIN WRAPPER ────────────────────────────────────────── */
+.admindek-main {
+    margin-right: var(--sidebar-mini-w);
+    margin-top: var(--topbar-h);      /* topbar is fixed full-width – push content down */
+    min-height: calc(100vh - var(--topbar-h));
+    display: flex;
+    flex-direction: column;
+    transition: margin-right .3s var(--ease);
+}
+body.sidebar-pinned .admindek-main {
+    margin-right: var(--sidebar-w);
+}
+
+/* ── 4. TOPBAR ──────────────────────────────────────────────── */
+/* Fixed, spans full 100vw so it's connected edge-to-edge */
+.admindek-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1050;         /* above sidebar (1040) */
+    height: var(--topbar-h);
+    background: var(--card-bg);
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    padding: 0 20px;
+    gap: 12px;
+}
+
+/* Brand logo inside topbar */
+.topbar-brand-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-inline-start: 4px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.topbar-brand-link:hover { color: var(--primary-dark); text-decoration: none; }
+.topbar-brand-icon { font-size: 1.2rem; }
+.topbar-brand-text { letter-spacing: -.2px; }
+
+.sidebar-toggle-btn {
+    background: none;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background .18s, color .18s;
+    flex-shrink: 0;
+}
+.sidebar-toggle-btn:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+/* User dropdown in topbar */
+.topbar-user-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-size: .88rem;
+    cursor: pointer;
+    transition: background .18s;
+}
+.topbar-user-btn:hover { background: var(--primary-light); }
+.topbar-avatar { font-size: 1.5rem; color: var(--primary); }
+.topbar-username { font-weight: 500; }
+
+/* Dropdown menu positioning */
+.topbar-user .dropdown-menu {
+    min-width: 190px;
+    border: 1px solid var(--border);
+    box-shadow: var(--card-shadow);
+    border-radius: 10px;
+    padding: 6px;
+}
+.topbar-user .dropdown-item {
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: .85rem;
+}
+.topbar-user .dropdown-item:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+/* ── 5. CONTENT WRAPPER ─────────────────────────────────────── */
+.admindek-content {
+    flex: 1;
+    padding: 22px 24px;
+    background: var(--content-bg);
+}
+
+/* ── 6. PAGE HEADING (content_title block) ──────────────────── */
+/* Django admin renders the page title inside content_title block */
+#content-main > h1,
+#content > h1,
+.admindek-content > h1,
+.content-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px;
+}
+
+/* ── 7. BREADCRUMBS ─────────────────────────────────────────── */
+.breadcrumb {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    margin-bottom: 18px;
+    font-size: .82rem;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "/";
+    color: var(--text-muted);
+    padding: 0 6px;
+    float: none;
+}
+.breadcrumb-item a { color: var(--primary); }
+.breadcrumb-item.active { color: var(--text-muted); }
+
+/* ── 8. MESSAGES ────────────────────────────────────────────── */
+.admindek-messages, .auth-messages { margin-bottom: 18px; }
+.admindek-messages .alert, .auth-messages .alert {
+    border-radius: 10px;
+    border: none;
+    font-size: .88rem;
+    padding: 12px 16px;
+}
+
+/* ── 9. CARDS ───────────────────────────────────────────────── */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+}
+.card-body { padding: 20px; }
+.card-header {
+    background: none;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    font-weight: 600;
+    font-size: .92rem;
+}
+
+/* ── 10. DJANGO ADMIN CHANGELIST ────────────────────────────── */
+
+/* ── Changelist toolbar card ─────────────────────────────────
+   Wraps #toolbar + .actions into a single elevated card with
+   a subtle gradient header row.
+──────────────────────────────────────────────────────────── */
+#toolbar,
+#changelist-form .actions {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    padding: 14px 18px;
+    margin-bottom: 0;
+}
+
+/* Give toolbar a top-accent gradient strip */
+#toolbar {
+    border-bottom: none;
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+    background: linear-gradient(135deg, #f8f9ff 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--border);
+}
+
+/* Actions row sits flush below toolbar */
+#changelist-form .actions {
+    border-top: none;
+    border-radius: 0 0 var(--card-radius) var(--card-radius);
+    background: #fafbff;
+    margin-bottom: 16px;
+}
+
+/* Search row – form and inner div both flex */
+#changelist-search,
+#changelist-search > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    width: auto;
+    max-width: 520px;
+}
+
+/* Search icon label – just the icon, no extra text */
+#changelist-search label {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    min-width: 0;
+}
+#changelist-search label img {
+    width: 18px;
+    height: 18px;
+    opacity: .55;
+    display: block;
+}
+
+/* Search input – grows to fill available space */
+#changelist-search input[type="text"],
+#changelist-search input[type="search"] {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 24px;
+    font-size: .88rem;
+    background: var(--content-bg);
+    color: var(--text);
+    transition: border-color .2s, box-shadow .2s, background .2s;
+}
+#changelist-search input[type="text"]:focus,
+#changelist-search input[type="search"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: var(--card-bg);
+    box-shadow: 0 0 0 3px rgba(67,97,238,.10);
+}
+
+/* Search submit button */
+#changelist-search input[type="submit"] {
+    flex-shrink: 0;
+    padding: 9px 24px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .3px;
+    transition: background .18s, box-shadow .18s;
+    box-shadow: 0 3px 10px rgba(67,97,238,.25);
+}
+#changelist-search input[type="submit"]:hover {
+    background: var(--primary-dark);
+    box-shadow: 0 4px 14px rgba(67,97,238,.4);
+}
+
+/* ── Actions bar ──────────────────────────────────────────── */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* "الإجراء:" text label wraps the select — style the text part */
+.actions label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+/* Actions dropdown – rectangular box with clear border */
+.actions select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 8px 14px 8px 36px;
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    font-size: .85rem;
+    background: var(--card-bg);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%234361ee' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 12px center;
+    color: var(--text);
+    width: 240px;
+    max-width: 240px;
+    cursor: pointer;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.04);
+    transition: border-color .18s, box-shadow .18s;
+}
+.actions select:hover {
+    border-color: var(--primary-dark);
+    box-shadow: inset 0 1px 4px rgba(0,0,0,.07);
+}
+.actions select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67,97,238,.15);
+}
+
+/* "نفّذ" Execute button – gradient pill with play icon */
+.actions button[type="submit"],
+.actions button.button,
+.actions input[type="submit"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 22px;
+    margin-inline-start: 24px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary) 0%, #3251d0 100%);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: .85rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+    transition: background .18s, box-shadow .18s, transform .12s;
+    box-shadow: 0 3px 12px rgba(67,97,238,.30);
+    white-space: nowrap;
+}
+.actions button[type="submit"]::before,
+.actions button.button::before {
+    content: "\25B6";   /* ▶ play triangle */
+    font-size: .65rem;
+    line-height: 1;
+    opacity: .85;
+}
+.actions button[type="submit"]:hover,
+.actions button.button:hover,
+.actions input[type="submit"]:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #2a42b8 100%);
+    box-shadow: 0 5px 18px rgba(67,97,238,.45);
+    transform: translateY(-1px);
+}
+.actions button[type="submit"]:active,
+.actions button.button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(67,97,238,.25);
+}
+
+/* Selection counter – badge chip */
+.action-counter {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: .78rem;
+    font-weight: 600;
+    background: rgba(67,97,238,.07);
+    color: var(--primary);
+    border: 1px solid rgba(67,97,238,.18);
+    margin-inline-start: auto;
+    white-space: nowrap;
+}
+
+/* Filter panel */
+#changelist-filter {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 14px;
+    margin-bottom: 16px;
+}
+#changelist-filter h2 {
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+#changelist-filter h3 {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 10px 0 6px;
+}
+#changelist-filter details { margin-bottom: 8px; }
+#changelist-filter details summary {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 0;
+    list-style: none;
+}
+#changelist-filter details summary::-webkit-details-marker { display: none; }
+#changelist-filter ul {
+    list-style: none;
+    margin: 4px 0 8px;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+#changelist-filter ul li a,
+#changelist-filter ul li.selected a {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .78rem;
+    border: 1px solid var(--border);
+    background: var(--content-bg);
+    color: var(--text-muted);
+    transition: all .15s;
+}
+#changelist-filter ul li a:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+#changelist-filter ul li.selected a {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+/* Result table */
+#result_list {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+}
+#result_list thead th {
+    background: linear-gradient(180deg, #f3f4fb 0%, #eef0f9 100%);
+    padding: 10px 14px;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+    border-left: 1px solid rgba(99,115,177,.15);
+    white-space: nowrap;
+    text-align: center;
+}
+#result_list thead th:last-child { border-left: none; }
+#result_list thead th a { color: var(--text-muted); }
+#result_list thead th a:hover { color: var(--primary); }
+#result_list thead th.sorted { background: linear-gradient(180deg, #ebedfa 0%, #e3e6f6 100%); }
+#result_list thead th.sorted a { color: var(--primary); }
+#result_list tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+}
+#result_list tbody tr:nth-child(even) { background: #fafbff; }
+#result_list tbody tr:last-child { border-bottom: none; }
+#result_list tbody tr:hover { background: #f0f3ff !important; }
+#result_list tbody td {
+    padding: 10px 14px;
+    font-size: .87rem;
+    color: var(--text);
+    vertical-align: middle;
+    border-left: 1px solid rgba(99,115,177,.08);
+    text-align: center;
+}
+#result_list tbody td:last-child { border-left: none; }
+/* first column (name) stays right-aligned */
+#result_list tbody td:first-child,
+#result_list tbody td.field-employee_name,
+#result_list tbody td.field-__str__ { text-align: right; }
+#result_list thead th:first-child { text-align: right; }
+#result_list tbody td a { color: var(--primary); font-weight: 500; }
+#result_list tbody td.action-checkbox { width: 32px; padding: 10px 8px; border-left: none; }
+
+/* Checkbox alignment */
+input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: var(--primary);
+    width: 15px;
+    height: 15px;
+}
+#action-toggle { cursor: pointer; }
+
+/* Select All popup */
+.xfull { width: 100%; }
+
+/* Workaround so the results container spans full width */
+.results { 
+    overflow-x: auto;
+    width: 100%;
+}
+
+/* Changelist full width */
+#changelist {
+    display: block;
+    width: 100%;
+}
+
+#changelist-form {
+    width: 100%;
+}
+
+/* Pagination */
+.paginator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 14px 0 4px;
+    font-size: .85rem;
+}
+.paginator a,
+.paginator .this-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all .15s;
+}
+.paginator a {
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--primary);
+}
+.paginator a:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+.paginator .this-page {
+    background: var(--primary);
+    color: #fff;
+    border: 1px solid var(--primary);
+}
+
+/* Empty changelist */
+#changelist-form .paginator { color: var(--text-muted); }
+td.empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+
+/* ── 11. CHANGE FORM ────────────────────────────────────────── */
+/* Outer flex wrapper from our change_form.html */
+#content-main { width: 100%; }
+
+/* Django fieldset */
+fieldset.module {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
+}
+fieldset.module h2 {
+    font-size: .88rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    margin: -20px -20px 16px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #f7f8fc;
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+}
+
+/* Form rows */
+.form-row, .form-group {
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 4px 16px;
+}
+.form-row:last-child { margin-bottom: 0; }
+
+/* Labels */
+.form-row label, label {
+    display: block;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    min-width: 140px;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="url"],
+input[type="tel"],
+select,
+textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: .88rem;
+    background: var(--card-bg);
+    color: var(--text);
+    font-family: var(--font);
+    transition: border-color .18s, box-shadow .18s;
+    direction: rtl;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67,97,238,.12);
+}
+textarea { min-height: 80px; height: 80px; max-height: 200px; resize: vertical; }
+select { appearance: auto; }
+
+/* Django admin aligned form */
+.aligned .form-row {
+    flex-direction: row;
+    align-items: center;
+}
+.aligned label {
+    flex-shrink: 0;
+    width: 140px;
+    margin-bottom: 0;
+}
+.aligned .field-box { flex: 1; }
+
+/* Help text */
+.help, p.help { font-size: .78rem; color: var(--text-muted); margin-top: 4px; }
+
+/* Error messages */
+.errornote, ul.errorlist {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #dc2626;
+    font-size: .85rem;
+    margin-bottom: 14px;
+}
+ul.errorlist { list-style: none; }
+ul.errorlist li { padding: 2px 0; }
+.errorlist.nonfield { margin-bottom: 10px; }
+.field-box.errors input,
+.field-box.errors select,
+.field-box.errors textarea {
+    border-color: var(--danger);
+}
+
+/* Submit row (action buttons at the bottom) - Modern Design */
+.submit-row {
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(255,255,255,0.95) 100%);
+    border: none;
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+    backdrop-filter: blur(10px);
+}
+.submit-row input[type="submit"],
+.submit-row a.closelink,
+.submit-row a.deletelink {
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: none;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+}
+.submit-row input[type="submit"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+.submit-row input[type="submit"]:hover::before {
+    left: 100%;
+}
+.submit-row input[name="_save"],
+.submit-row input[type="submit"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+.submit-row input[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+.submit-row input[type="submit"]:active {
+    transform: translateY(0);
+}
+.submit-row input[name="_addanother"] {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+}
+.submit-row input[name="_addanother"]:hover {
+    box-shadow: 0 6px 20px rgba(17, 153, 142, 0.5);
+}
+.submit-row input[name="_continue"] {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+}
+.submit-row input[name="_continue"]:hover {
+    box-shadow: 0 6px 20px rgba(79, 172, 254, 0.5);
+}
+.submit-row a.deletelink {
+    background: linear-gradient(135deg, #fff 0%, #fef2f2 100%);
+    color: #dc2626;
+    border: 2px solid #fecaca;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+}
+.submit-row a.deletelink::before {
+    content: '🗑️';
+    font-size: 0.85rem;
+}
+.submit-row a.deletelink:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    color: #fff;
+    border-color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35);
+}
+.submit-row span { color: var(--text-muted); font-size: .82rem; }
+
+/* Dark mode adjustments for submit row */
+[data-theme="dark"] .submit-row {
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(30,30,40,0.95) 100%);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] .submit-row a.deletelink {
+    background: linear-gradient(135deg, rgba(50,30,30,1) 0%, rgba(60,35,35,1) 100%);
+    border-color: #7f1d1d;
+}
+
+/* Object tools (history, add, view) - Modern Design */
+.object-tools {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.object-tools li a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+    border: none;
+    border-radius: 12px;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(30, 58, 95, 0.35);
+    position: relative;
+    overflow: hidden;
+}
+.object-tools li a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+.object-tools li a:hover::before {
+    left: 100%;
+}
+.object-tools li a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 58, 95, 0.5);
+    background: linear-gradient(135deg, #2d5a87 0%, #3d7ab7 100%);
+}
+.object-tools li a:active {
+    transform: translateY(0);
+}
+/* History button icon */
+.object-tools li a[href*="history"]::after {
+    content: '📜';
+    font-size: 0.9rem;
+    margin-right: 4px;
+    order: -1;
+}
+/* View on site icon */
+.object-tools li a[href*="view"]::after,
+.object-tools li a.viewsitelink::after {
+    content: '🔗';
+    font-size: 0.9rem;
+    margin-right: 4px;
+    order: -1;
+}
+/* Add another icon */
+.object-tools li a.addlink::after {
+    content: '➕';
+    font-size: 0.8rem;
+    margin-right: 4px;
+    order: -1;
+}
+
+/* Actions sidebar (jazzy-actions / admindek-actions) - Modern Design */
+#jazzy-actions, #admindek-actions {
+    background: linear-gradient(180deg, var(--card-bg) 0%, rgba(255,255,255,0.98) 100%);
+    border: none;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.05);
+    position: sticky;
+    top: calc(var(--topbar-h) + 10px);
+    backdrop-filter: blur(10px);
+}
+[data-theme="dark"] #jazzy-actions,
+[data-theme="dark"] #admindek-actions {
+    background: linear-gradient(180deg, var(--card-bg) 0%, rgba(25,25,35,0.98) 100%);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+#jazzy-actions .submit-row,
+#admindek-actions .submit-row {
+    flex-direction: column;
+    align-items: stretch;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    background: transparent;
+    gap: 10px;
+}
+#jazzy-actions .submit-row input[type="submit"],
+#admindek-actions .submit-row input[type="submit"] {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+}
+#jazzy-actions .submit-row a.deletelink,
+#admindek-actions .submit-row a.deletelink {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+}
+#jazzy-actions .object-tools,
+#admindek-actions .object-tools {
+    flex-direction: column;
+    margin-top: 12px;
+}
+#jazzy-actions .object-tools li a,
+#admindek-actions .object-tools li a {
+    width: 100%;
+    justify-content: center;
+}
+
+/* ── 12. INLINE ADMINS ──────────────────────────────────────── */
+.inline-group {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
+}
+.inline-group h2 {
+    font-size: .88rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    margin: -20px -20px 16px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #f7f8fc;
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+}
+.inline-related h3 {
+    font-size: .85rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    background: var(--content-bg);
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.add-row td a, .add-row td a:hover {
+    color: var(--primary);
+    font-size: .85rem;
+}
+a.inline-deletelink {
+    color: var(--danger);
+    font-size: .82rem;
+}
+
+/* ── 13. MODULE (generic Django admin widget container) ─────── */
+.module {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+.module table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.module table th,
+.module table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: .86rem;
+    text-align: right;
+}
+.module caption {
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    background: #f7f8fc;
+    border-bottom: 1px solid var(--border);
+    caption-side: top;
+    text-align: right;
+}
+
+/* ── 14. STATUS BADGES ──────────────────────────────────────── */
+.badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: .74rem;
+    font-weight: 600;
+}
+.badge-success, .badge.bg-success { background: #d1fae5; color: #065f46; }
+.badge-warning, .badge.bg-warning { background: #fef3c7; color: #92400e; }
+.badge-danger,  .badge.bg-danger  { background: #fee2e2; color: #991b1b; }
+.badge-info,    .badge.bg-info    { background: #dbeafe; color: #1e40af; }
+
+/* ── 15. BUTTONS ────────────────────────────────────────────── */
+.btn {
+    border-radius: 8px;
+    font-size: .86rem;
+    font-weight: 600;
+    padding: 7px 16px;
+    transition: all .18s;
+}
+.btn-primary { background: var(--primary); border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+.btn-sm { padding: 4px 12px; font-size: .8rem; }
+.btn-outline-secondary { border-color: var(--border); color: var(--text-muted); }
+.btn-outline-secondary:hover { background: var(--content-bg); }
+
+/* ── 16. LOGIN PAGE ─────────────────────────────────────────── */
+.admindek-auth-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary) 0%, #7209b7 100%);
+    padding: 30px 16px;
+}
+.admindek-auth-wrap #content-main,
+.admindek-auth-wrap #main {
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+}
+.admindek-auth-wrap h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--primary);
+    text-align: center;
+}
+.admindek-auth-wrap .form-row { margin-bottom: 18px; }
+.admindek-auth-wrap input[type="submit"] {
+    width: 100%;
+    padding: 11px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .18s;
+}
+.admindek-auth-wrap input[type="submit"]:hover { background: var(--primary-dark); }
+.admindek-auth-wrap .auth-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 360px;
+}
+
+/* ── 17. FOOTER ─────────────────────────────────────────────── */
+.admindek-footer {
+    padding: 14px 24px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    font-size: .78rem;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    flex-shrink: 0;
+}
+
+/* ── 18. IMPORT/EXPORT ──────────────────────────────────────── */
+.import-export-form {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+}
+
+/* ── 19. DATE/DATETIME WIDGETS ──────────────────────────────── */
+.datetime { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.datetime .date-input,
+.datetime .time-input { width: auto; }
+
+/* Calendar dropdowns */
+.calendarbox, .clockbox {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    z-index: 9999;
+}
+
+/* ── 20. POPUP WINDOW ───────────────────────────────────────── */
+.admindek-popup {
+    background: var(--card-bg);
+    min-height: 100vh;
+}
+.admindek-popup #content, .admindek-popup #main {
+    padding: 16px;
+}
+
+/* ── 21. RELATED POPUP LINKS ────────────────────────────────── */
+a.related-widget-wrapper-link, .related-lookup { color: var(--primary); }
+
+/* ── 22. DJANGO ADMIN GENERIC RELATIONS ─────────────────────── */
+.grp-collapse-handler { cursor: pointer; }
+
+/* ── 23. SCROLLBAR ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c5cce4; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9aa3c5; }
+
+/* ── 24. RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 1199.98px) {
+    :root { --sidebar-w: 240px; }
+}
+
+@media (max-width: 991.98px) {
+    /* On mobile: sidebar hidden off screen to the right by default */
+    .admindek-sidebar {
+        top: var(--topbar-h);
+        height: calc(100vh - var(--topbar-h));
+        transform: translateX(calc(var(--sidebar-w) + 8px));
+    }
+    /* Main content: full width on mobile */
+    .admindek-main {
+        margin-right: 0 !important;
+    }
+    /* Sidebar shown: slide in from right */
+    body.sidebar-open .admindek-sidebar {
+        width: var(--sidebar-w);
+        transform: translateX(0);
+    }
+    body.sidebar-open .sidebar-overlay {
+        display: block;
+    }
+    .admindek-content { padding: 16px; }
+}
+
+@media (max-width: 575.98px) {
+    .admindek-content { padding: 12px; }
+    #result_list thead th, #result_list tbody td { padding: 8px 10px; }
+    fieldset.module { padding: 14px; }
+}
+
+/* ── 25. UTILITY ────────────────────────────────────────────── */
+.text-muted { color: var(--text-muted) !important; }
+.fw-bold { font-weight: 700 !important; }
+.gap-3 { gap: 1rem !important; }
+
+/* Ensure tables with long content scroll instead of overflow */
+.results, .change-list { overflow-x: auto; }
+
+/* Fix select2 (if still present on some pages from Django admin) */
+.select2-container { direction: rtl; }
+.select2-dropdown { direction: rtl; }
+
+/* ── Change Form Tabs - Modern Professional Design ─────────────────────────────────────── */
+.admindek-tabs {
+    margin-bottom: 0;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+}
+
+[data-theme="dark"] .admindek-tabs {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.admindek-tab-nav {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    margin: 0;
+    border-bottom: none;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] .admindek-tab-nav {
+    background: rgba(30, 41, 59, 0.8);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.admindek-tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: none;
+    margin-bottom: 0;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-radius: 10px;
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admindek-tab-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--primary) 0%, #818cf8 100%);
+    opacity: 0;
+    transition: opacity .25s ease;
+    border-radius: 10px;
+    z-index: -1;
+}
+
+.admindek-tab-btn:hover {
+    color: var(--primary);
+    background: rgba(99, 102, 241, 0.08);
+    transform: translateY(-1px);
+}
+
+.admindek-tab-btn.active {
+    color: #fff;
+    background: transparent;
+    border-bottom-color: transparent;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+    transform: translateY(-1px);
+}
+
+.admindek-tab-btn.active::before {
+    opacity: 1;
+}
+
+/* نقطة مؤشر للتبويب النشط */
+.admindek-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--primary);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--primary);
+}
+
+/* تأثير الانتقال عند التمرير */
+.admindek-tab-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.admindek-tab-pane {
+    display: none;
+    animation: tabFadeIn .3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admindek-tab-pane.active {
+    display: block;
+}
+
+.admindek-tab-pane > .module {
+    border-radius: 0 0 var(--card-radius) var(--card-radius);
+    border-top: none;
+    margin-top: 12px;
+}
+
+@keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* التبويبات في الشاشات الصغيرة */
+@media (max-width: 1200px) {
+    .admindek-tab-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        flex-wrap: nowrap;
+    }
+    .admindek-tab-nav::-webkit-scrollbar {
+        display: none;
+    }
+    .admindek-tab-btn {
+        padding: 10px 16px;
+        font-size: .82rem;
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .admindek-tabs {
+        padding: 4px;
+        border-radius: 12px;
+    }
+    .admindek-tab-nav {
+        padding: 4px;
+        gap: 4px;
+        border-radius: 10px;
+    }
+    .admindek-tab-btn {
+        padding: 8px 14px;
+        font-size: .78rem;
+        border-radius: 8px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   📱 تحسينات الجوال / Mobile Responsive Improvements
+   تستهدف شاشات أقل من 768px (الجوال) و 1024px (الجهاز اللوحي)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── جهاز لوحي / Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+    /* تضييق الشريط الجانبي */
+    .admindek-sidebar {
+        width: var(--sidebar-mini-w) !important;
+    }
+    /* تقليص هامش المحتوى */
+    .admindek-content {
+        margin-right: var(--sidebar-mini-w) !important;
+    }
+    /* إخفاء تسميات القائمة الجانبية وإبقاء الأيقونات */
+    .admindek-sidebar .sidebar-nav-link span,
+    .admindek-sidebar .nav-group-title,
+    .admindek-sidebar .sidebar-user-name,
+    .admindek-sidebar .sidebar-user-role {
+        display: none !important;
+    }
+    /* بطاقات الإحصائيات: عمودان */
+    .admindek-stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* ── جوال / Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+    /* إخفاء الشريط الجانبي وتقليص الهامش */
+    .admindek-sidebar {
+        transform: translateX(100%) !important;
+        width: var(--sidebar-w) !important;
+        box-shadow: none !important;
+        transition: transform .28s var(--ease) !important;
+    }
+    body.mobile-sidebar-open .admindek-sidebar {
+        transform: translateX(0) !important;
+        box-shadow: -8px 0 32px rgba(0,0,0,.25) !important;
+    }
+    .admindek-content {
+        margin-right: 0 !important;
+        padding: 12px !important;
+    }
+
+    /* شريط علوي للجوال */
+    .admindek-topbar {
+        padding: 0 12px !important;
+    }
+    .admindek-topbar .topbar-title {
+        font-size: .9rem !important;
+    }
+
+    /* بطاقات الإحصائيات: عمود واحد */
+    .admindek-stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    .stat-card {
+        padding: 14px !important;
+    }
+    .stat-card .stat-value {
+        font-size: 1.6rem !important;
+    }
+
+    /* جداول البيانات: تمرير أفقي */
+    #result_list,
+    .results table,
+    .change-list .results {
+        overflow-x: auto !important;
+        display: block !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    /* إخفاء أعمدة أقل أهمية في الجداول على الجوال */
+    #result_list .field-created_at,
+    #result_list .field-updated_at,
+    #result_list .field-uploaded_by {
+        display: none !important;
+    }
+
+    /* أزرار الإجراءات: حجم مناسب للمس */
+    .submit-row input[type="submit"],
+    .submit-row a.deletelink,
+    .button, input[type="submit"],
+    .admindek-btn {
+        min-height: 44px !important;
+        font-size: 15px !important;
+        padding: 10px 16px !important;
+        width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+    .submit-row {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    /* نماذج الإدخال: مناسبة للمس */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px !important; /* يمنع تكبير iOS التلقائي */
+        min-height: 44px !important;
+        padding: 10px 12px !important;
+    }
+
+    /* شريط التصفية: قابل للطي */
+    #changelist-filter {
+        width: 100% !important;
+        position: static !important;
+        margin-bottom: 16px !important;
+        border-radius: var(--card-radius) !important;
+    }
+
+    /* الـ fieldsets: تقليل المسافات */
+    .module.aligned .form-row {
+        flex-direction: column !important;
+    }
+    fieldset.module {
+        padding: 12px !important;
+    }
+    fieldset.module h2 {
+        font-size: .85rem !important;
+        padding: 8px 12px !important;
+    }
+
+    /* لوحة المعلومات: التخطيط العمودي */
+    .admindek-dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* بطاقات الطلبات المعلقة */
+    .pending-cards {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* سلسلة الاعتمادات: عمودي */
+    .approval-chain {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .approval-chain .approval-step::after {
+        content: '↓' !important;
+        display: block !important;
+        text-align: center !important;
+    }
+
+    /* تصغير الـ breadcrumbs */
+    div.breadcrumbs {
+        font-size: .8rem !important;
+        padding: 6px 12px !important;
+    }
+
+    /* طي القوائم الفرعية في الـ object-tools */
+    ul.object-tools {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    ul.object-tools li a {
+        font-size: .8rem !important;
+        padding: 6px 10px !important;
+    }
+}
+
+/* ── جوال صغير / Small Mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+    .pending-cards {
+        grid-template-columns: 1fr !important;
+    }
+    #header {
+        padding: 0 10px !important;
+    }
+    #header h1 {
+        font-size: 1rem !important;
+    }
+    /* إخفاء المزيد من أعمدة الجداول */
+    #result_list .field-national_id,
+    #result_list .field-nationality,
+    #result_list .field-branch {
+        display: none !important;
+    }
+}
+}

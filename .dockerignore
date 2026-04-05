@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Local files
+.env
+*.log
+logs/
+*.sqlite3
+
+# Static files (سيتم إنشاؤها في Docker)
+staticfiles/
+
+# Documentation
+*.md
+docs/
+
+# OS
+.DS_Store
+Thumbs.db

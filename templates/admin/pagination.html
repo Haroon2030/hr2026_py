@@ -1,0 +1,60 @@
+{% load admin_list %}
+<!-- Pagination styles in erp-enhancements.css -->
+
+<div class="paginator paginator-container" data-current="{{ cl.page_num }}" data-total="{{ cl.paginator.num_pages|default:'1' }}">
+    {% if pagination_required %}
+        <!-- Next/Prev Buttons mapped by JS -->
+        <a href="#" class="prev-next btn-next-page">التالي &lsaquo;&lsaquo;</a>
+        
+        {% for i in page_range %}
+            {% paginator_number cl i %}
+        {% endfor %}
+
+        <a href="#" class="prev-next btn-prev-page">&rsaquo;&rsaquo; السابق</a>
+    {% endif %}
+    
+    <div class="total-count">
+    {{ cl.result_count }} {% if cl.result_count == 1 %}{{ cl.opts.verbose_name }}{% else %}{{ cl.opts.verbose_name_plural }}{% endif %}
+    </div>
+
+    {% if show_all_url %}
+        <a href="{{ show_all_url }}" class="showall">أظهر الكل</a>
+    {% endif %}
+    {% if cl.formset and cl.result_count %}
+        <input type="submit" name="_save" class="default btn-save-paginator" value="حفظ">
+    {% endif %}
+</div>
+
+<script>
+    if (!window.paginatorScriptLoaded) {
+        window.paginatorScriptLoaded = true;
+        document.addEventListener('DOMContentLoaded', function() {
+            var searchParams = new URLSearchParams(window.location.search);
+            var paginators = document.querySelectorAll('.paginator-container');
+            
+            paginators.forEach(function(paginator) {
+                var current = parseInt(paginator.getAttribute('data-current')) || 0;
+                var total = parseInt(paginator.getAttribute('data-total')) || 1;
+                
+                var btnPrev = paginator.querySelector('.btn-prev-page');
+                var btnNext = paginator.querySelector('.btn-next-page');
+                
+                if (btnPrev && btnNext) {
+                    if (current > 0) {
+                        searchParams.set('p', current - 1);
+                        btnPrev.href = "?" + searchParams.toString();
+                    } else {
+                        btnPrev.classList.add('disabled');
+                    }
+                    
+                    if (current < total - 1) {
+                        searchParams.set('p', current + 1);
+                        btnNext.href = "?" + searchParams.toString();
+                    } else {
+                        btnNext.classList.add('disabled');
+                    }
+                }
+            });
+        });
+    }
+</script>

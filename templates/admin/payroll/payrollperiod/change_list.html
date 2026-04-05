@@ -1,0 +1,35 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block object-tools-items %}
+
+    {# ── زر توليد رواتب الشهر الحالي ── #}
+    <li>
+        <a href="generate-form/"
+           class="btn-generate-payroll"
+           style="
+               display: inline-flex;
+               align-items: center;
+               gap: 6px;
+               background: linear-gradient(135deg, #28a745, #20c997);
+               color: #fff !important;
+               padding: 9px 20px;
+               border-radius: 8px;
+               font-weight: 700;
+               font-size: 13px;
+               text-decoration: none;
+               box-shadow: 0 3px 8px rgba(40,167,69,.35);
+               transition: opacity .2s;
+               white-space: nowrap;
+           "
+           onmouseover="this.style.opacity='.85'"
+           onmouseout="this.style.opacity='1'"
+        >
+            ⚙ توليد كشف رواتب PDF
+        </a>
+    </li>
+
+    {# ── أدوات القائمة الافتراضية (إضافة / استيراد) ── #}
+    {{ block.super }}
+
+{% endblock %}

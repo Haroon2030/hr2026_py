@@ -1,0 +1,241 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+    
+    .eosb-wrapper {
+        font-family: 'Cairo', sans-serif;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        padding: 30px;
+        margin-bottom: 30px;
+        direction: rtl;
+    }
+
+    .eosb-header {
+        border-bottom: 2px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .eosb-header h2 {
+        margin: 0;
+        color: #1a1d2e;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .input-group {
+        margin-bottom: 15px;
+    }
+
+    .input-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #495057;
+    }
+
+    .input-group input, .input-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-family: 'Cairo', sans-serif;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .result-box {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px solid #e20000;
+        text-align: center;
+        margin-top: 30px;
+    }
+
+    .result-box h3 {
+        margin: 0 0 10px;
+        color: #1a1d2e;
+    }
+
+    .result-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: #e20000;
+        direction: ltr; /* Keeping numbers LTR */
+        display: inline-block;
+    }
+
+    .btn-calc {
+        background: #1a1d2e;
+        color: #fff;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 20px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .btn-calc:hover {
+        background: #2c324e;
+    }
+
+    .details-box {
+        margin-top: 15px;
+        font-size: 14px;
+        color: #6c757d;
+        text-align: right;
+    }
+
+  </style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>حاسبة مكافأة نهاية الخدمة (نظام العمل السعودي)</h1>
+    <p class="help">يتم عرض الموظفين المحددين في القائمة أدناه مع إمكانية حساب مستحقات كل موظف على حدة بناءً على نوع إنهاء العقد.</p>
+
+    {% for data in terminations_data %}
+    <div class="eosb-wrapper">
+        <div class="eosb-header">
+            <h2><i class="fas fa-calculator"></i> حاسبة الموظف: {{ data.termination.employee_name }} ({{ data.termination.employee_number|default:"بدون رقم" }})</h2>
+        </div>
+
+        <div class="grid-container">
+            <!-- عمود المدخلات -->
+            <div>
+                <div class="input-group">
+                    <label>الراتب الأساسي الأخير</label>
+                    <input type="number" step="any" id="basic_{{ forloop.counter }}" value="{{ data.salary|default_if_none:'0'|stringformat:'.2f' }}" />
+                </div>
+                <div class="input-group">
+                    <label>بدل السكن المتصل (إن وجد)</label>
+                    <input type="number" step="any" id="housing_{{ forloop.counter }}" value="{{ data.housing|default_if_none:'0'|stringformat:'.2f' }}" />
+                    <small>النظام يعتبر الراتب الأخير الشامل (أساسي + بدلات ثابتة متصلة).</small>
+                </div>
+                <div class="input-group">
+                    <label>تاريخ المباشرة</label>
+                    <input type="date" id="start_date_{{ forloop.counter }}" value="{{ data.start_date|date:'Y-m-d' }}" />
+                </div>
+                <div class="input-group">
+                    <label>تاريخ آخر يوم عمل (تاريخ الإنهاء)</label>
+                    <!-- Default to today's date -->
+                    <input type="date" id="end_date_{{ forloop.counter }}" value="{% now 'Y-m-d' %}" />
+                </div>
+                <div class="input-group">
+                    <label>سبب إنهاء الخدمة</label>
+                    <select id="reason_{{ forloop.counter }}">
+                        <option value="resignation">استقالة (Resignation)</option>
+                        <option value="termination">إنهاء من قبل صاحب العمل أو انتهاء العقد</option>
+                    </select>
+                </div>
+
+                <button class="btn-calc" onclick="calculateEOSB('{{ forloop.counter }}')">إحسب المكافأة الآن</button>
+            </div>
+
+            <!-- عمود النتائج -->
+            <div>
+                <div class="result-box">
+                    <h3>إجمالي مكافأة نهاية الخدمة المستحقة</h3>
+                    <div class="result-value" id="result_{{ forloop.counter }}">0.00</div> <span>ر.س</span>
+                    
+                    <div class="details-box" id="details_{{ forloop.counter }}">
+                        ... سيتم عرض تفاصيل الحساب هنا ...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="submit-row">
+        <a href="../" class="button">عودة لقائمة الطلبات</a>
+    </div>
+
+</div>
+
+<script>
+    function calculateEOSB(id) {
+        // قراءة المدخلات
+        const basic = parseFloat(document.getElementById('basic_' + id).value) || 0;
+        const housing = parseFloat(document.getElementById('housing_' + id).value) || 0;
+        const totalSalary = basic + housing;
+        
+        const startDateStr = document.getElementById('start_date_' + id).value;
+        const endDateStr = document.getElementById('end_date_' + id).value;
+        const reason = document.getElementById('reason_' + id).value;
+        
+        if (!startDateStr || !endDateStr) {
+            alert('الرجاء التأكد من إدخال تواريخ البداية والنهاية!');
+            return;
+        }
+
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+        
+        if (endDate <= startDate) {
+            alert('تاريخ النهاية يجب أن يكون أكبر من تاريخ المباشرة!');
+            return;
+        }
+
+        // حساب المدة بالسنوات المانحة (الأيام / 365)
+        const timeDiff = endDate.getTime() - startDate.getTime();
+        const days = Math.floor(timeDiff / (1000 * 3600 * 24));
+        const totalYears = days / 365.25; // السنة الميلادية
+        
+        let calculationText = `<strong>المدة الزمنية:</strong> ${Math.floor(totalYears)} سنة و ${days % 365} يوم<br>`;
+        calculationText += `<strong>الراتب الأساسي والأخير المعتمد للمكافأة:</strong> ${totalSalary.toFixed(2)} ر.س<br>`;
+
+        // النظام: نصف شهر عن كل سنة من السنوات الخمس الأولى، وشهر كامل عن كل سنة تالية
+        const first5Years = Math.min(totalYears, 5);
+        const remainingYears = Math.max(0, totalYears - 5);
+        
+        let fullAward = (first5Years * (totalSalary / 2)) + (remainingYears * totalSalary);
+
+        // تعديل الاستقالة
+        let factor = 1.0;
+        if (reason === 'resignation') {
+            if (totalYears < 2) {
+                factor = 0;
+                calculationText += '<span style="color:red;">لا يستحق الموظف أي مكافأة عند الاستقالة قبل إتمام سنتين.</span><br>';
+            } else if (totalYears >= 2 && totalYears < 5) {
+                factor = 1/3;
+                calculationText += 'الاستقالة بين 2 - 5 سنوات: الاستحقاق هو ثلث (1/3) المكافأة.<br>';
+            } else if (totalYears >= 5 && totalYears < 10) {
+                factor = 2/3;
+                calculationText += 'الاستقالة بين 5 - 10 سنوات: الاستحقاق هو ثلثي (2/3) المكافأة.<br>';
+            } else {
+                factor = 1.0;
+                calculationText += 'الاستقالة بعد 10 سنوات: الاستحقاق كامل (100%).<br>';
+            }
+        } else {
+            calculationText += 'الإنهاء من قبل الشركة يُوجب دفع كامل المكافأة المستحقة (100%).<br>';
+        }
+
+        const finalAmount = fullAward * factor;
+        
+        document.getElementById('result_' + id).innerText = finalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('details_' + id).innerHTML = calculationText;
+    }
+</script>
+{% endblock %}
