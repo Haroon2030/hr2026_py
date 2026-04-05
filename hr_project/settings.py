@@ -88,9 +88,24 @@ WSGI_APPLICATION = 'hr_project.wsgi.application'
 # قاعدة البيانات / Database
 # ==============================
 # اختيار نوع قاعدة البيانات
-DB_ENGINE = os.getenv('DB_ENGINE', 'sqlite3')  # sqlite3 أو mysql
+# sqlite3 | mysql | postgresql
+DB_ENGINE = os.getenv('DB_ENGINE', 'sqlite3')
 
-if DB_ENGINE == 'mysql':
+if DB_ENGINE == 'postgresql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'hr_django'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'OPTIONS': {
+                'client_encoding': 'UTF8',
+            },
+        }
+    }
+elif DB_ENGINE == 'mysql':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -104,7 +119,7 @@ if DB_ENGINE == 'mysql':
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             },
         },
-        }
+    }
     # قاعدة البيانات القديمة (PHP) - تُحمَّل فقط عند توفر OLD_DB_NAME
     if os.getenv('OLD_DB_NAME'):
         DATABASES['legacy'] = {

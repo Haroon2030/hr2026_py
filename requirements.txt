@@ -18,4 +18,5 @@ whitenoise>=6.6.0
 # اختياري / Optional
 # ==============================
 # mysqlclient>=2.2.0  # فعّل هذا إذا استخدمت MySQL
-# psycopg2-binary>=2.9.9  # فعّل هذا إذا استخدمت PostgreSQL
+psycopg2-binary>=2.9.9  # PostgreSQL
+dj-database-url>=2.0.0  # لدعم DATABASE_URL
