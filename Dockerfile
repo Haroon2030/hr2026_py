@@ -36,11 +36,11 @@ RUN mkdir -p logs staticfiles media data
 RUN SECRET_KEY=build-time-key python manage.py collectstatic --noinput
 
 # تعريض المنفذ
-EXPOSE 8000
+EXPOSE ${PORT:-8000}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/admin/login/ || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/admin/login/ || exit 1
 
 # أمر التشغيل
 ENTRYPOINT ["./entrypoint.sh"]

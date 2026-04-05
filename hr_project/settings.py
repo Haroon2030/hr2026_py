@@ -342,18 +342,23 @@ LOGGING = {
 # إعدادات الأمان للإنتاج / Production Security
 # ==============================
 if not DEBUG:
-    # HTTPS إجباري
-    SECURE_SSL_REDIRECT = True
+    # HTTPS إجباري - يمكن تعطيله عبر متغير البيئة
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 'yes')
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
+    # Trust X-Forwarded headers from proxy
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+    
     # HSTS - تفعيل بعد التأكد من HTTPS
-    SECURE_HSTS_SECONDS = 31536000  # سنة
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    if SECURE_SSL_REDIRECT:
+        SECURE_HSTS_SECONDS = 31536000  # سنة
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
     
     # أمان الكوكيز
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = SECURE_SSL_REDIRECT
+    CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
     
     # حماية إضافية
     SECURE_CONTENT_TYPE_NOSNIFF = True
