@@ -25,6 +25,14 @@ ALLOWED_HOSTS = ['*'] if _hosts == '*' else [h.strip() for h in _hosts.split(','
 _csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(',') if o.strip()]
+else:
+    # إنشاء تلقائي من ALLOWED_HOSTS
+    if ALLOWED_HOSTS and ALLOWED_HOSTS != ['*']:
+        CSRF_TRUSTED_ORIGINS = []
+        for h in ALLOWED_HOSTS:
+            CSRF_TRUSTED_ORIGINS.extend([f'http://{h}', f'https://{h}', f'http://{h}:8080'])
+    elif ALLOWED_HOSTS == ['*']:
+        CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
 
 # ==============================
 # التطبيقات المثبتة / Installed Apps
