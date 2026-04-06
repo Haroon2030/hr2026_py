@@ -279,7 +279,7 @@ class PayrollAdmin(ImportExportModelAdmin):
             'payrolls': queryset,
             'title': 'طباعة مسير الرواتب - Payslip',
         }
-        return render(request, 'admin/hr/payroll/payslip_print.html', context)
+        return render(request, 'admin/core/payroll/payslip_print.html', context)
 
     @admin.action(description='🏦 تصدير الرواتب للبنك / حماية الأجور (CSV)')
     def export_wps_csv(self, request, queryset):

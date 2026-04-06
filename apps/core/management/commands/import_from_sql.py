@@ -1,10 +1,12 @@
 """
-استيراد البيانات من ملف SQL القديم (MySQL/PHP) إلى Django
-=========================================================
+استيراد تزايدي للبيانات من ملف SQL القديم (MySQL/PHP) إلى Django
+================================================================
 الاستخدام:
-    python manage.py import_from_sql
-    python manage.py import_from_sql --clean   # مسح البيانات القديمة أولاً
+    python manage.py import_from_sql                        # استيراد الجديد فقط
+    python manage.py import_from_sql --update               # استيراد + تحديث الموجود
+    python manage.py import_from_sql --clean                # مسح ثم استيراد
     python manage.py import_from_sql --file /path/to/file.sql
+    python manage.py import_from_sql --sync-files           # رفع الملفات الجديدة إلى R2
 """
 import os
 import re
@@ -29,14 +31,16 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'استيراد البيانات من ملف SQL القديم'
+    help = 'استيراد تزايدي: يستورد السجلات الجديدة فقط من SQL القديم بدون تكرار'
 
     def add_arguments(self, parser):
         parser.add_argument('--clean', action='store_true', help='مسح البيانات القديمة أولاً')
+        parser.add_argument('--update', action='store_true', help='تحديث السجلات الموجودة إذا تغيّرت')
         parser.add_argument('--file', type=str, help='مسار ملف SQL', default=None)
+        parser.add_argument('--sync-files', action='store_true', help='رفع الملفات الجديدة إلى R2 بعد الاستيراد')
 
     def handle(self, *args, **options):
-        self.admin_user = User.objects.filter(is_superuser=True).first() or User.objects.first()
+        self.admin_user: Any = User.objects.filter(is_superuser=True).first() or User.objects.first()
         if not self.admin_user:
             self.stderr.write("لا يوجد مستخدمين!")
             return
@@ -44,7 +48,10 @@ class Command(BaseCommand):
         self.branch_cache: Dict[str, Branch] = {}
         self.cost_center_cache: Dict[str, CostCenter] = {}
         self.user_cache: Dict[int, Any] = {}
-        self.stats = {'imported': 0, 'skipped': 0, 'errors': 0}
+        self.update_mode = options.get('update', False)
+        self._reset_stats()
+        # إحصائيات إجمالية
+        self.total_stats = {'imported': 0, 'updated': 0, 'skipped': 0, 'errors': 0}
 
         # البحث عن ملف SQL
         sql_file = options.get('file')
@@ -61,15 +68,16 @@ class Command(BaseCommand):
                     break
 
         if not sql_file or not Path(sql_file).exists():
-            self.stderr.write(f"ملف SQL غير موجود! جرب: --file /path/to/file.sql")
-            self.stderr.write(f"المسارات المفحوصة: {[str(c) for c in candidates]}")
+            self.stderr.write("ملف SQL غير موجود! جرب: --file /path/to/file.sql")
             return
 
         self.stdout.write("=" * 60)
-        self.stdout.write("         استيراد شامل لبيانات HR Pro")
+        self.stdout.write("         استيراد تزايدي لبيانات HR Pro")
         self.stdout.write("=" * 60)
         self.stdout.write(f"المستخدم: {self.admin_user}")
         self.stdout.write(f"الملف: {sql_file}")
+        mode = "استيراد + تحديث" if self.update_mode else "استيراد الجديد فقط (بدون تكرار)"
+        self.stdout.write(f"الوضع: {mode}")
 
         if options['clean']:
             self._clean_data()
@@ -78,7 +86,6 @@ class Command(BaseCommand):
             content = f.read()
         self.stdout.write(f"حجم الملف: {len(content):,} حرف")
 
-        # استيراد البيانات
         self._import_branches(content)
         self._import_cost_centers(content)
         self._import_organizations(content)
@@ -97,10 +104,13 @@ class Command(BaseCommand):
 
         self._print_summary()
 
+        if options.get('sync_files'):
+            self._sync_files_to_r2()
+
     # ==============================
     # SQL Parsing
     # ==============================
-    def _parse_sql_value(self, v: str) -> Any:
+    def _parse_sql_value(self, v):
         v = v.strip()
         if v.upper() == 'NULL':
             return None
@@ -112,7 +122,7 @@ class Command(BaseCommand):
         except (ValueError, InvalidOperation):
             return v
 
-    def _parse_row_values(self, row_str: str) -> List[Any]:
+    def _parse_row_values(self, row_str):
         values, current, in_quote = [], "", False
         for i, char in enumerate(row_str):
             if char == "'" and (i == 0 or row_str[i-1] != '\\'):
@@ -127,7 +137,7 @@ class Command(BaseCommand):
             values.append(self._parse_sql_value(current.strip()))
         return values
 
-    def _extract_rows(self, content: str, table_name: str) -> List[str]:
+    def _extract_rows(self, content, table_name):
         pattern = rf"INSERT INTO `{table_name}`[^V]*VALUES\s*"
         rows = []
         for match in re.finditer(pattern, content):
@@ -150,7 +160,7 @@ class Command(BaseCommand):
                     i += 1
         return rows
 
-    def _extract_columns(self, content: str, table_name: str) -> List[str]:
+    def _extract_columns(self, content, table_name):
         pattern = rf"INSERT INTO `{table_name}`\s*\(([^)]+)\)\s*VALUES"
         match = re.search(pattern, content)
         if not match:
@@ -158,10 +168,46 @@ class Command(BaseCommand):
         return re.findall(r'`([^`]+)`', match.group(1))
 
     # ==============================
-    # Helper functions
+    # Helpers
     # ==============================
     def _reset_stats(self):
-        self.stats = {'imported': 0, 'skipped': 0, 'errors': 0}
+        self.stats = {'imported': 0, 'updated': 0, 'skipped': 0, 'errors': 0}
+
+    def _accumulate_stats(self):
+        for k in self.total_stats:
+            self.total_stats[k] += self.stats[k]
+
+    def _print_stats(self, label):
+        parts = [f"NEW {self.stats['imported']}"]
+        if self.update_mode:
+            parts.append(f"UPD {self.stats['updated']}")
+        parts.extend([f"SKIP {self.stats['skipped']}", f"ERR {self.stats['errors']}"])
+        self.stdout.write(f"   {' | '.join(parts)}")
+        self._accumulate_stats()
+
+    def _save_record(self, model_class, record_id, defaults, ts_field='created_at', ts_value=None):
+        existing = model_class.objects.filter(pk=record_id).first()
+        if existing:
+            if self.update_mode:
+                changed = False
+                for key, value in defaults.items():
+                    old_val = getattr(existing, key, None)
+                    if old_val != value:
+                        setattr(existing, key, value)
+                        changed = True
+                if changed:
+                    existing.save()
+                    if ts_field and ts_value:
+                        model_class.objects.filter(pk=record_id).update(**{ts_field: ts_value})
+                    return 'updated'
+                return 'skipped'
+            return 'skipped'
+        else:
+            obj = model_class(id=record_id, **defaults)
+            obj.save()
+            if ts_field and ts_value:
+                model_class.objects.filter(pk=record_id).update(**{ts_field: ts_value})
+            return 'imported'
 
     def _parse_datetime(self, val):
         if not val or not isinstance(val, str):
@@ -261,7 +307,7 @@ class Command(BaseCommand):
         self.stdout.write("   تم المسح!")
 
     # ==============================
-    # Import functions
+    # Simple models
     # ==============================
     def _import_simple(self, content, table_name, model_class, label):
         self.stdout.write(f"\n{label}...")
@@ -272,17 +318,14 @@ class Command(BaseCommand):
                 record_id, name = values[0], values[1]
                 if name:
                     name = str(name).strip()
-                    if model_class.objects.filter(pk=record_id).exists() or model_class.objects.filter(name=name).exists():
-                        self.stats['skipped'] += 1
-                    else:
-                        try:
-                            model_class.objects.create(id=record_id, name=name)
-                            self.stats['imported'] += 1
-                        except Exception:
-                            self.stats['errors'] += 1
+                    try:
+                        result = self._save_record(model_class, record_id, {'name': name})
+                        self.stats[result] += 1
+                    except Exception:
+                        self.stats['errors'] += 1
                 else:
                     self.stats['skipped'] += 1
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats(label)
 
     def _import_branches(self, content):
         self._import_simple(content, 'branches', Branch, 'استيراد الفروع')
@@ -296,6 +339,9 @@ class Command(BaseCommand):
     def _import_sponsorships(self, content):
         self._import_simple(content, 'sponsorships', Sponsorship, 'استيراد الكفالات')
 
+    # ==============================
+    # Employees
+    # ==============================
     def _import_employees(self, content):
         self.stdout.write("\nاستيراد الموظفين...")
         self._reset_stats()
@@ -309,51 +355,48 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if EmployeeFile.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                start_type_val = str(data.get('start_type') or '').lower()
-                start_type = StartType.REPLACEMENT if start_type_val in ['transfer', 'نقل', 'replacement', 'بديل'] else StartType.NEW
-                obj = EmployeeFile(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    employee_number=str(data.get('employee_number') or '') or None,
-                    national_id=str(data.get('national_id') or '') or None,
-                    nationality=str(data.get('nationality') or '') or None,
-                    department=str(data.get('department') or '') or None,
-                    start_type=start_type,
-                    start_date=self._parse_date(data.get('start_date')),
-                    salary=self._to_decimal(data.get('salary')),
-                    branch=self._get_or_create_branch(data.get('branch')),
-                    department_filter=data.get('department_filter'),
-                    cost_center=self._get_or_create_cost_center(data.get('cost_center')),
-                    notes=data.get('notes'),
-                    file_path=data.get('file_path') or '',
-                    file_name=data.get('file_name') or data.get('original_filename'),
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    completed_by_id=self._get_user_id(data.get('completed_by')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                    assigned_employee_number=data.get('assigned_employee_number'),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('created_at'))
-                if created_at:
-                    EmployeeFile.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                st = str(data.get('start_type') or '').lower()
+                start_type = StartType.REPLACEMENT if st in ['transfer', 'نقل', 'replacement', 'بديل'] else StartType.NEW
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'employee_number': str(data.get('employee_number') or '') or None,
+                    'national_id': str(data.get('national_id') or '') or None,
+                    'nationality': str(data.get('nationality') or '') or None,
+                    'department': str(data.get('department') or '') or None,
+                    'start_type': start_type,
+                    'start_date': self._parse_date(data.get('start_date')),
+                    'salary': self._to_decimal(data.get('salary')),
+                    'branch': self._get_or_create_branch(data.get('branch')),
+                    'department_filter': data.get('department_filter'),
+                    'cost_center': self._get_or_create_cost_center(data.get('cost_center')),
+                    'notes': data.get('notes'),
+                    'file_path': data.get('file_path') or '',
+                    'file_name': data.get('file_name') or data.get('original_filename'),
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'completed_by_id': self._get_user_id(data.get('completed_by')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                    'assigned_employee_number': data.get('assigned_employee_number'),
+                }
+                ts = self._parse_datetime(data.get('created_at'))
+                result = self._save_record(EmployeeFile, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
                 if self.stats['errors'] <= 3:
                     self.stderr.write(f"   ERR ID {data.get('id')}: {e}")
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('الموظفين')
 
+    # ==============================
+    # Advances
+    # ==============================
     def _import_advances(self, content):
         self.stdout.write("\nاستيراد السلف...")
         self._reset_stats()
@@ -367,42 +410,39 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if AdvanceFile.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = AdvanceFile(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    employee_number=str(data.get('employee_number') or '') or None,
-                    advance_amount=self._to_decimal(data.get('advance_amount')),
-                    advance_date=self._parse_date(data.get('advance_date')),
-                    file_path=data.get('file_path') or '',
-                    file_name=data.get('file_name') or data.get('original_filename'),
-                    notes=data.get('notes'),
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    branch=self._get_or_create_branch(data.get('branch')),
-                    department_filter=data.get('department_filter'),
-                    installments=self._to_int(data.get('installments')) or 1,
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    completed_by_id=self._get_user_id(data.get('completed_by')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('created_at'))
-                if created_at:
-                    AdvanceFile.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'employee_number': str(data.get('employee_number') or '') or None,
+                    'advance_amount': self._to_decimal(data.get('advance_amount')),
+                    'advance_date': self._parse_date(data.get('advance_date')),
+                    'file_path': data.get('file_path') or '',
+                    'file_name': data.get('file_name') or data.get('original_filename'),
+                    'notes': data.get('notes'),
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'branch': self._get_or_create_branch(data.get('branch')),
+                    'department_filter': data.get('department_filter'),
+                    'installments': self._to_int(data.get('installments')) or 1,
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'completed_by_id': self._get_user_id(data.get('completed_by')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                }
+                ts = self._parse_datetime(data.get('created_at'))
+                result = self._save_record(AdvanceFile, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('السلف')
 
+    # ==============================
+    # Statements
+    # ==============================
     def _import_statements(self, content):
         self.stdout.write("\nاستيراد البيانات والإجازات...")
         self._reset_stats()
@@ -416,46 +456,43 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if StatementFile.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = StatementFile(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    employee_number=str(data.get('employee_number') or '') or None,
-                    statement_type=str(data.get('statement_type') or ''),
-                    file_path=data.get('file_path') or '',
-                    file_name=data.get('file_name') or data.get('original_filename'),
-                    notes=data.get('notes'),
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    branch=self._get_or_create_branch(data.get('branch')),
-                    department_filter=data.get('department_filter'),
-                    vacation_days=self._to_int(data.get('vacation_days')),
-                    vacation_start=self._parse_date(data.get('vacation_start')),
-                    vacation_end=self._parse_date(data.get('vacation_end')),
-                    vacation_balance=self._to_decimal(data.get('vacation_balance')),
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    completed_by_id=self._get_user_id(data.get('completed_by')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('created_at'))
-                if created_at:
-                    StatementFile.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'employee_number': str(data.get('employee_number') or '') or None,
+                    'statement_type': str(data.get('statement_type') or ''),
+                    'file_path': data.get('file_path') or '',
+                    'file_name': data.get('file_name') or data.get('original_filename'),
+                    'notes': data.get('notes'),
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'branch': self._get_or_create_branch(data.get('branch')),
+                    'department_filter': data.get('department_filter'),
+                    'vacation_days': self._to_int(data.get('vacation_days')),
+                    'vacation_start': self._parse_date(data.get('vacation_start')),
+                    'vacation_end': self._parse_date(data.get('vacation_end')),
+                    'vacation_balance': self._to_decimal(data.get('vacation_balance')),
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'completed_by_id': self._get_user_id(data.get('completed_by')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                }
+                ts = self._parse_datetime(data.get('created_at'))
+                result = self._save_record(StatementFile, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
                 if self.stats['errors'] == 1:
                     self.stderr.write(f"   ERR: {e}")
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('البيانات/الإجازات')
 
+    # ==============================
+    # Violations
+    # ==============================
     def _import_violations(self, content):
         self.stdout.write("\nاستيراد المخالفات...")
         self._reset_stats()
@@ -469,44 +506,41 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if ViolationFile.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = ViolationFile(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    employee_number=str(data.get('employee_number') or '') or None,
-                    violation_type=str(data.get('violation_type') or ''),
-                    violation_date=self._parse_date(data.get('violation_date')),
-                    file_path=data.get('file_path') or '',
-                    violation_notes=data.get('violation_notes'),
-                    employee_statement=data.get('employee_statement'),
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    branch=self._get_or_create_branch(data.get('branch')),
-                    employee_branch=self._get_or_create_branch(data.get('employee_branch')),
-                    employee_department=data.get('employee_department'),
-                    department_filter=data.get('department_filter'),
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('uploaded_at'))
-                if created_at:
-                    ViolationFile.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'employee_number': str(data.get('employee_number') or '') or None,
+                    'violation_type': str(data.get('violation_type') or ''),
+                    'violation_date': self._parse_date(data.get('violation_date')),
+                    'file_path': data.get('file_path') or '',
+                    'violation_notes': data.get('violation_notes'),
+                    'employee_statement': data.get('employee_statement'),
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'branch': self._get_or_create_branch(data.get('branch')),
+                    'employee_branch': self._get_or_create_branch(data.get('employee_branch')),
+                    'employee_department': data.get('employee_department'),
+                    'department_filter': data.get('department_filter'),
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                }
+                ts = self._parse_datetime(data.get('uploaded_at'))
+                result = self._save_record(ViolationFile, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
                 if self.stats['errors'] == 1:
                     self.stderr.write(f"   ERR: {e}")
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('المخالفات')
 
+    # ==============================
+    # Terminations
+    # ==============================
     def _import_terminations(self, content):
         self.stdout.write("\nاستيراد إنهاء الخدمات...")
         self._reset_stats()
@@ -520,39 +554,36 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if TerminationFile.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = TerminationFile(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    employee_number=str(data.get('employee_number') or '') or None,
-                    national_id=str(data.get('national_id') or '') or None,
-                    nationality=str(data.get('nationality') or '') or None,
-                    notes=data.get('notes'),
-                    file_path=data.get('file_path') or '',
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    branch=self._get_or_create_branch(data.get('branch')),
-                    department_filter=data.get('department_filter'),
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('created_at'))
-                if created_at:
-                    TerminationFile.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'employee_number': str(data.get('employee_number') or '') or None,
+                    'national_id': str(data.get('national_id') or '') or None,
+                    'nationality': str(data.get('nationality') or '') or None,
+                    'notes': data.get('notes'),
+                    'file_path': data.get('file_path') or '',
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'branch': self._get_or_create_branch(data.get('branch')),
+                    'department_filter': data.get('department_filter'),
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                }
+                ts = self._parse_datetime(data.get('created_at'))
+                result = self._save_record(TerminationFile, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('إنهاء الخدمات')
 
+    # ==============================
+    # Medical Insurance
+    # ==============================
     def _import_medical_insurance(self, content):
         self.stdout.write("\nاستيراد التأمين الطبي...")
         self._reset_stats()
@@ -566,39 +597,36 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if MedicalInsurance.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = MedicalInsurance(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    insurance_type=str(data.get('insurance_type') or ''),
-                    details=str(data.get('details') or ''),
-                    file_path=data.get('file_path') or '',
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    branch=self._get_or_create_branch(data.get('branch')),
-                    department_filter=data.get('department_filter'),
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('uploaded_at'))
-                if created_at:
-                    MedicalInsurance.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'insurance_type': str(data.get('insurance_type') or ''),
+                    'details': str(data.get('details') or ''),
+                    'file_path': data.get('file_path') or '',
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'branch': self._get_or_create_branch(data.get('branch')),
+                    'department_filter': data.get('department_filter'),
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                }
+                ts = self._parse_datetime(data.get('uploaded_at'))
+                result = self._save_record(MedicalInsurance, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
                 if self.stats['errors'] == 1:
                     self.stderr.write(f"   ERR: {e}")
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('التأمين الطبي')
 
+    # ==============================
+    # Medical Excuses
+    # ==============================
     def _import_medical_excuses(self, content):
         self.stdout.write("\nاستيراد الأعذار الطبية...")
         self._reset_stats()
@@ -612,43 +640,40 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if MedicalExcuse.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = MedicalExcuse(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    employee_id_number=str(data.get('employee_id') or ''),
-                    branch=str(data.get('branch') or ''),
-                    department=str(data.get('department') or ''),
-                    cost_center=self._get_or_create_cost_center(data.get('cost_center')),
-                    excuse_reason=str(data.get('excuse_reason') or ''),
-                    excuse_date=self._parse_date(data.get('excuse_date')),
-                    excuse_duration=self._to_int(data.get('excuse_duration')) or 1,
-                    file_path=data.get('file_path') or '',
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    department_filter=data.get('department_filter'),
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('created_at'))
-                if created_at:
-                    MedicalExcuse.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'employee_id_number': str(data.get('employee_id') or ''),
+                    'branch': str(data.get('branch') or ''),
+                    'department': str(data.get('department') or ''),
+                    'cost_center': self._get_or_create_cost_center(data.get('cost_center')),
+                    'excuse_reason': str(data.get('excuse_reason') or ''),
+                    'excuse_date': self._parse_date(data.get('excuse_date')),
+                    'excuse_duration': self._to_int(data.get('excuse_duration')) or 1,
+                    'file_path': data.get('file_path') or '',
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'department_filter': data.get('department_filter'),
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                }
+                ts = self._parse_datetime(data.get('created_at'))
+                result = self._save_record(MedicalExcuse, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
                 if self.stats['errors'] == 1:
                     self.stderr.write(f"   ERR: {e}")
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('الأعذار الطبية')
 
+    # ==============================
+    # Salary Adjustments
+    # ==============================
     def _import_salary_adjustments(self, content):
         self.stdout.write("\nاستيراد تعديلات الرواتب...")
         self._reset_stats()
@@ -662,44 +687,41 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if SalaryAdjustment.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = SalaryAdjustment(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    employee_number=str(data.get('employee_number') or ''),
-                    department=str(data.get('department') or ''),
-                    current_salary=self._to_decimal(data.get('current_salary')),
-                    salary_increase=self._to_decimal(data.get('salary_increase')),
-                    new_salary=self._to_decimal(data.get('new_salary')),
-                    adjustment_reason=data.get('adjustment_reason'),
-                    notes=data.get('notes'),
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    branch=self._get_or_create_branch(data.get('branch')),
-                    cost_center=self._get_or_create_cost_center(data.get('cost_center')),
-                    department_filter=data.get('department_filter'),
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('created_at'))
-                if created_at:
-                    SalaryAdjustment.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'employee_number': str(data.get('employee_number') or ''),
+                    'department': str(data.get('department') or ''),
+                    'current_salary': self._to_decimal(data.get('current_salary')),
+                    'salary_increase': self._to_decimal(data.get('salary_increase')),
+                    'new_salary': self._to_decimal(data.get('new_salary')),
+                    'adjustment_reason': data.get('adjustment_reason'),
+                    'notes': data.get('notes'),
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'branch': self._get_or_create_branch(data.get('branch')),
+                    'cost_center': self._get_or_create_cost_center(data.get('cost_center')),
+                    'department_filter': data.get('department_filter'),
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                }
+                ts = self._parse_datetime(data.get('created_at'))
+                result = self._save_record(SalaryAdjustment, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
                 if self.stats['errors'] == 1:
                     self.stderr.write(f"   ERR: {e}")
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('تعديلات الرواتب')
 
+    # ==============================
+    # Transfers
+    # ==============================
     def _import_transfers(self, content):
         self.stdout.write("\nاستيراد طلبات النقل...")
         self._reset_stats()
@@ -713,48 +735,45 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if EmployeeTransferRequest.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = EmployeeTransferRequest(
-                    id=record_id,
-                    employee_name=str(data['employee_name'] or ''),
-                    employee_id_number=str(data.get('employee_id') or ''),
-                    current_branch=self._get_or_create_branch(data.get('current_branch')),
-                    requested_branch=self._get_or_create_branch(data.get('requested_branch')),
-                    current_department=str(data.get('current_department') or ''),
-                    requested_department=str(data.get('requested_department') or ''),
-                    department_filter=data.get('department_filter'),
-                    current_cost_center=self._get_or_create_cost_center(data.get('current_cost_center')),
-                    new_cost_center=self._get_or_create_cost_center(data.get('new_cost_center')),
-                    transfer_reason=str(data.get('transfer_reason') or ''),
-                    preferred_date=self._parse_date(data.get('preferred_date')),
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    assign_note=data.get('assign_note'),
-                    in_progress_at=self._parse_datetime(data.get('in_progress_at')),
-                    completed_at=self._parse_datetime(data.get('completed_at')),
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                    completed_by_id=self._get_user_id(data.get('completed_by')),
-                    branch_approved_by_id=self._get_user_id(data.get('branch_approved_by')),
-                    department_approved_by_id=self._get_user_id(data.get('department_approved_by')),
-                    manager_approved_by_id=self._get_user_id(data.get('manager_approved_by')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('created_at'))
-                if created_at:
-                    EmployeeTransferRequest.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'employee_name': str(data['employee_name'] or ''),
+                    'employee_id_number': str(data.get('employee_id') or ''),
+                    'current_branch': self._get_or_create_branch(data.get('current_branch')),
+                    'requested_branch': self._get_or_create_branch(data.get('requested_branch')),
+                    'current_department': str(data.get('current_department') or ''),
+                    'requested_department': str(data.get('requested_department') or ''),
+                    'department_filter': data.get('department_filter'),
+                    'current_cost_center': self._get_or_create_cost_center(data.get('current_cost_center')),
+                    'new_cost_center': self._get_or_create_cost_center(data.get('new_cost_center')),
+                    'transfer_reason': str(data.get('transfer_reason') or ''),
+                    'preferred_date': self._parse_date(data.get('preferred_date')),
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'assign_note': data.get('assign_note'),
+                    'in_progress_at': self._parse_datetime(data.get('in_progress_at')),
+                    'completed_at': self._parse_datetime(data.get('completed_at')),
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                    'completed_by_id': self._get_user_id(data.get('completed_by')),
+                    'branch_approved_by_id': self._get_user_id(data.get('branch_approved_by')),
+                    'department_approved_by_id': self._get_user_id(data.get('department_approved_by')),
+                    'manager_approved_by_id': self._get_user_id(data.get('manager_approved_by')),
+                }
+                ts = self._parse_datetime(data.get('created_at'))
+                result = self._save_record(EmployeeTransferRequest, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
                 if self.stats['errors'] == 1:
                     self.stderr.write(f"   ERR: {e}")
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('طلبات النقل')
 
+    # ==============================
+    # Attendance
+    # ==============================
     def _import_attendance(self, content):
         self.stdout.write("\nاستيراد سجلات الحضور...")
         self._reset_stats()
@@ -768,42 +787,39 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if AttendanceRecord.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
-                obj = AttendanceRecord(
-                    id=record_id,
-                    batch_id=str(data.get('batch_id') or ''),
-                    batch_date=self._parse_date(data.get('batch_date')),
-                    employee_name=str(data['employee_name'] or ''),
-                    title=data.get('title'),
-                    branch=self._get_or_create_branch(data.get('branch')),
-                    department_filter=data.get('department_filter'),
-                    date_from=self._parse_date(data.get('date_from')),
-                    nationality=data.get('nationality'),
-                    shift_start=data.get('shift_start'),
-                    shift_end=data.get('shift_end'),
-                    attendance_date=self._parse_date(data.get('attendance_date')),
-                    notes=data.get('notes'),
-                    status=self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
-                    branch_manager_approval=self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    department_manager_approval=self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    manager_approval=self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
-                    approval_notes=data.get('approval_notes'),
-                    uploaded_by_id=self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
-                    assigned_to_id=self._get_user_id(data.get('assigned_to')),
-                )
-                obj.save()
-                created_at = self._parse_datetime(data.get('created_at'))
-                if created_at:
-                    AttendanceRecord.objects.filter(pk=record_id).update(created_at=created_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'batch_id': str(data.get('batch_id') or ''),
+                    'batch_date': self._parse_date(data.get('batch_date')),
+                    'employee_name': str(data['employee_name'] or ''),
+                    'title': data.get('title'),
+                    'branch': self._get_or_create_branch(data.get('branch')),
+                    'department_filter': data.get('department_filter'),
+                    'date_from': self._parse_date(data.get('date_from')),
+                    'nationality': data.get('nationality'),
+                    'shift_start': data.get('shift_start'),
+                    'shift_end': data.get('shift_end'),
+                    'attendance_date': self._parse_date(data.get('attendance_date')),
+                    'notes': data.get('notes'),
+                    'status': self._clean_status(data.get('status'), RequestStatus) or RequestStatus.PENDING,
+                    'branch_manager_approval': self._clean_status(data.get('branch_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'department_manager_approval': self._clean_status(data.get('department_manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'manager_approval': self._clean_status(data.get('manager_approval'), ApprovalStatus) or ApprovalStatus.PENDING,
+                    'approval_notes': data.get('approval_notes'),
+                    'uploaded_by_id': self._get_user_id(data.get('uploaded_by')) or self.admin_user.id,
+                    'assigned_to_id': self._get_user_id(data.get('assigned_to')),
+                }
+                ts = self._parse_datetime(data.get('created_at'))
+                result = self._save_record(AttendanceRecord, record_id, defaults, 'created_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
                 if self.stats['errors'] == 1:
                     self.stderr.write(f"   ERR: {e}")
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('سجلات الحضور')
 
+    # ==============================
+    # Messages
+    # ==============================
     def _import_messages(self, content):
         self.stdout.write("\nاستيراد الرسائل...")
         self._reset_stats()
@@ -817,53 +833,77 @@ class Command(BaseCommand):
                 values += [None] * (len(cols) - len(values))
                 data = dict(zip(cols, values))
                 record_id = data['id']
-                if UserMessage.objects.filter(pk=record_id).exists():
-                    self.stats['skipped'] += 1
-                    continue
                 sender = self._get_user(data.get('sender_id'))
                 receiver = self._get_user(data.get('receiver_id'))
                 reply_by = self._get_user(data.get('reply_by'))
                 if not sender or not receiver:
                     self.stats['errors'] += 1
                     continue
-                obj = UserMessage(
-                    id=record_id,
-                    sender=sender,
-                    receiver=receiver,
-                    message_text=str(data.get('message_text') or '').replace('\r\n', '\n'),
-                    status=data.get('status') or 'open',
-                    reply_text=data.get('reply_text'),
-                    reply_by=reply_by,
-                    reply_at=self._parse_datetime(data.get('reply_at')),
-                    reply_file_path=data.get('reply_file_path'),
-                )
-                obj.save()
-                sent_at = self._parse_datetime(data.get('sent_at'))
-                if sent_at:
-                    UserMessage.objects.filter(pk=record_id).update(sent_at=sent_at)
-                self.stats['imported'] += 1
+                defaults = {
+                    'sender': sender,
+                    'receiver': receiver,
+                    'message_text': str(data.get('message_text') or '').replace('\r\n', '\n'),
+                    'status': data.get('status') or 'open',
+                    'reply_text': data.get('reply_text'),
+                    'reply_by': reply_by,
+                    'reply_at': self._parse_datetime(data.get('reply_at')),
+                    'reply_file_path': data.get('reply_file_path'),
+                }
+                ts = self._parse_datetime(data.get('sent_at'))
+                result = self._save_record(UserMessage, record_id, defaults, 'sent_at', ts)
+                self.stats[result] += 1
             except Exception as e:
                 self.stats['errors'] += 1
-        self.stdout.write(f"   OK {self.stats['imported']} | SKIP {self.stats['skipped']} | ERR {self.stats['errors']}")
+        self._print_stats('الرسائل')
 
+    # ==============================
+    # Sync files to R2
+    # ==============================
+    def _sync_files_to_r2(self):
+        self.stdout.write("\n" + "=" * 60)
+        self.stdout.write("رفع الملفات الجديدة إلى R2...")
+        try:
+            from django.conf import settings
+            import subprocess
+            upload_script = Path(settings.BASE_DIR) / 'upload_to_r2.py'
+            if upload_script.exists():
+                result = subprocess.run(
+                    [sys.executable, str(upload_script)],
+                    capture_output=True, text=True, cwd=str(settings.BASE_DIR)
+                )
+                self.stdout.write(result.stdout)
+                if result.returncode != 0:
+                    self.stderr.write(f"خطأ في رفع الملفات: {result.stderr}")
+            else:
+                self.stdout.write("   سكريبت upload_to_r2.py غير موجود")
+        except Exception as e:
+            self.stderr.write(f"   خطأ: {e}")
+
+    # ==============================
+    # Summary
+    # ==============================
     def _print_summary(self):
         self.stdout.write("\n" + "=" * 60)
-        self.stdout.write("ملخص البيانات:")
+        self.stdout.write("ملخص الاستيراد التزايدي:")
         self.stdout.write("=" * 60)
-        self.stdout.write(f"   الفروع: {Branch.objects.count()}")
-        self.stdout.write(f"   مراكز التكلفة: {CostCenter.objects.count()}")
-        self.stdout.write(f"   المؤسسات: {Organization.objects.count()}")
-        self.stdout.write(f"   الكفالات: {Sponsorship.objects.count()}")
-        self.stdout.write(f"   الموظفين: {EmployeeFile.objects.count()}")
-        self.stdout.write(f"   السلف: {AdvanceFile.objects.count()}")
-        self.stdout.write(f"   البيانات/الإجازات: {StatementFile.objects.count()}")
-        self.stdout.write(f"   المخالفات: {ViolationFile.objects.count()}")
-        self.stdout.write(f"   إنهاء الخدمات: {TerminationFile.objects.count()}")
-        self.stdout.write(f"   التأمين الطبي: {MedicalInsurance.objects.count()}")
-        self.stdout.write(f"   الأعذار الطبية: {MedicalExcuse.objects.count()}")
-        self.stdout.write(f"   تعديلات الرواتب: {SalaryAdjustment.objects.count()}")
-        self.stdout.write(f"   طلبات النقل: {EmployeeTransferRequest.objects.count()}")
-        self.stdout.write(f"   سجلات الحضور: {AttendanceRecord.objects.count()}")
-        self.stdout.write(f"   الرسائل: {UserMessage.objects.count()}")
+        t = self.total_stats
+        self.stdout.write(f"   جديد: {t['imported']}")
+        if self.update_mode:
+            self.stdout.write(f"   محدّث: {t['updated']}")
+        self.stdout.write(f"   موجود (متخطى): {t['skipped']}")
+        self.stdout.write(f"   أخطاء: {t['errors']}")
+        self.stdout.write("")
+        self.stdout.write("عدد السجلات الحالية:")
+        for model, name in [
+            (Branch, 'الفروع'), (CostCenter, 'مراكز التكلفة'),
+            (Organization, 'المؤسسات'), (Sponsorship, 'الكفالات'),
+            (EmployeeFile, 'الموظفين'), (AdvanceFile, 'السلف'),
+            (StatementFile, 'البيانات/الإجازات'), (ViolationFile, 'المخالفات'),
+            (TerminationFile, 'إنهاء الخدمات'), (MedicalInsurance, 'التأمين الطبي'),
+            (MedicalExcuse, 'الأعذار الطبية'), (SalaryAdjustment, 'تعديلات الرواتب'),
+            (EmployeeTransferRequest, 'طلبات النقل'), (AttendanceRecord, 'سجلات الحضور'),
+            (UserMessage, 'الرسائل'),
+        ]:
+            self.stdout.write(f"   {name}: {model.objects.count()}")
         self.stdout.write("=" * 60)
-        self.stdout.write("تم الاستيراد بنجاح!")
+        self.stdout.write("تم بنجاح!")

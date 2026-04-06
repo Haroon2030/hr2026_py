@@ -20,8 +20,13 @@ python manage.py setup_permissions || true
 echo "==> Creating admin user..."
 python manage.py create_admin || true
 
-echo "==> Importing data from SQL (if available)..."
-python manage.py import_from_sql || echo "No SQL data to import or already imported."
+# استيراد البيانات يدوياً فقط عند الطلب
+if [ "${IMPORT_SQL:-false}" = "true" ]; then
+    echo "==> Importing data from SQL (requested via IMPORT_SQL=true)..."
+    python manage.py import_from_sql || echo "No SQL data to import or already imported."
+else
+    echo "==> Skipping SQL import (set IMPORT_SQL=true to enable)."
+fi
 
 echo "==> Starting server on port ${PORT:-8000}..."
 exec gunicorn hr_project.wsgi:application \

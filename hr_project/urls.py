@@ -26,6 +26,15 @@ _APP_RENAMES = {
     'finance': 'payroll',
 }
 
+def _make_redirect_view(target_url_pattern):
+    """Factory to avoid lambda late-binding issue in loops."""
+    def view(request, rest=''):
+        return RedirectView.as_view(
+            url=target_url_pattern.format(rest=rest),
+            permanent=True,
+        )(request)
+    return view
+
 redirect_patterns = []
 
 # Redirect old app URLs to new app URLs
@@ -33,10 +42,7 @@ for old_app, new_app in _APP_RENAMES.items():
     redirect_patterns.append(
         re_path(
             rf'^{old_app}/(?P<rest>.*)$',
-            lambda request, rest='', _new=new_app: RedirectView.as_view(
-                url=f'/{_new}/{rest}',
-                permanent=True,
-            )(request),
+            _make_redirect_view(f'/{new_app}/{{rest}}'),
         )
     )
 
@@ -45,10 +51,7 @@ for old, new in _MOVED_MODELS.items():
     redirect_patterns.append(
         re_path(
             rf'^core/{old}/(?P<rest>.*)$',
-            lambda request, rest='', _new=new: RedirectView.as_view(
-                url=f'/requests/{_new}/{rest}',
-                permanent=True,
-            )(request),
+            _make_redirect_view(f'/requests/{new}/{{rest}}'),
         )
     )
 

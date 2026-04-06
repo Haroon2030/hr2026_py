@@ -25,13 +25,6 @@ except ImportError:
     HAS_REPORTLAB = False
 
 
-def _reverse_arabic(text):
-    """عكس النص العربي للعرض في PDF (حل بسيط بدون python-bidi)"""
-    if not text:
-        return ''
-    return str(text)
-
-
 def generate_pdf_response(filename, title, headers, data, landscape_mode=False):
     """
     إنشاء ملف PDF مع جدول بيانات

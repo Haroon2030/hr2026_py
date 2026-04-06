@@ -324,6 +324,12 @@ class BaseRequestAdmin(BranchPermissionMixin, ImportExportModelAdmin):
         from django.shortcuts import redirect
         from django.contrib import messages
         
+        VALID_FIELDS = {'branch_manager_approval', 'department_manager_approval', 'manager_approval'}
+        VALID_ACTIONS = {'approve', 'reject'}
+        if field_name not in VALID_FIELDS or action not in VALID_ACTIONS:
+            messages.error(request, 'إجراء غير صالح.')
+            return redirect(request.META.get('HTTP_REFERER') or '..')
+        
         obj = self.get_object(request, object_id)
         if obj is None:
             messages.error(request, 'الطلب غير موجود.')

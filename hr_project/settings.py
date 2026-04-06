@@ -32,7 +32,7 @@ else:
         for h in ALLOWED_HOSTS:
             CSRF_TRUSTED_ORIGINS.extend([f'http://{h}', f'https://{h}', f'http://{h}:8080'])
     elif ALLOWED_HOSTS == ['*']:
-        CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
+        CSRF_TRUSTED_ORIGINS = []
 
 # ==============================
 # التطبيقات المثبتة / Installed Apps
